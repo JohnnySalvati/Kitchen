@@ -1,24 +1,18 @@
-# elements_view.py
+# recipes_view.py
 import tkinter as tk
 from tkinter import ttk
 from models.database import *
 
-class ElementView(tk.Frame):
-    """ 
-    cls: es la clase para el CRUD
-    field_definition: es un diccionario con los campos de la tabla ej: 
-        field_definition = [
-            {"label": "Nombre: ", "field": "name" },
-            ...
-            ]
-    """
-    def __init__(self, parent, cls, field_definition, title): 
+# self.recipe_view = RecipeView(self.root, Recipe,  [{"label": "Nombre", "field": "name"}], "Recetas")
+
+class RecipeView(tk.Frame):
+    def __init__(self, parent): 
         super().__init__(parent, bd=4, relief="groove")
-        self.cls = cls
+        
         self.selected = None
         self.entries = {}
         # title
-        title_bot = tk.Button(self, text=title, relief="ridge")
+        title_bot = tk.Button(self, text="Recetas", relief="ridge")
         
         # frame definition
         self.grid_columnconfigure(0, weight=2)
@@ -35,14 +29,13 @@ class ElementView(tk.Frame):
         list_frame.grid(row=2, column=0, columnspan=2, sticky="nsew")
 
         # formulario de entrada
-        for i, field in enumerate(field_definition):
-            label = tk.Label(entry_frame, text=field["label"])
-            entry = tk.Entry(entry_frame)
+        label = tk.Label(entry_frame, text="Nombre:")
+        entry = tk.Entry(entry_frame)
 
-            label.grid(row=i, column=0, sticky="e", padx=5, pady=5)
-            entry.grid(row=i, column=1, sticky="w", padx=5, pady=5)
+        label.grid(row=0, column=0, sticky="e", padx=5, pady=5)
+        entry.grid(row=0, column=1, sticky="w", padx=5, pady=5)
 
-            self.entries[field["field"]] = entry
+        self.entries["name"] = entry
         
         # command buttons
         save_button = tk.Button(command_frame, text="Guardar", command=self.save_obj)
@@ -68,7 +61,7 @@ class ElementView(tk.Frame):
         self.load_all()
 
     def load_all(self):
-        elements = self.cls.get_all()
+        elements = Recipe.get_all()
         items = [f"{element.id}: {element.name}" for element in elements]
         items.append("+ Nuevo...")
         self.items_list.set(items)
@@ -78,13 +71,11 @@ class ElementView(tk.Frame):
         if not name:
             return
         if self.selected:
-            for field, entry in self.entries.items():
-                setattr(self.selected, field, entry.get().strip())
+            setattr(self.selected, "name", self.entries["name"].get().strip())
             self.selected.save()
         else:
             # Crear un nuevo objeto con los datos del formulario
-            kwargs = {field: entry.get().strip() for field, entry in self.entries.items()}
-            obj = self.cls(**kwargs)
+            obj = Recipe(self.entries["name"].get().strip(),[])
             obj.save()
         self.clear_fields()
         self.entries["name"].focus()
@@ -106,16 +97,15 @@ class ElementView(tk.Frame):
                 self.selected = None
             else:
                 id = int(data.split(":")[0])
-                self.selected = self.cls.get_by_id(id)
-                for field, entry in self.entries.items():
-                    entry.insert(0, getattr(self.selected, field)) 
+                self.selected = Recipe.get_by_id(id)
+                self.entries["name"].insert(0, getattr(self.selected, "name"))
             self.after(10, lambda: self.entries["name"].focus())
         except IndexError:
             pass
 
     def clear_fields(self):
-        for entry in self.entries.values():
-            entry.delete(0, tk.END)
+
+        self.entries["name"].delete(0, tk.END)
 
     def close(self):
         self.destroy()

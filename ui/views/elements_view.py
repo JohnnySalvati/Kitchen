@@ -18,21 +18,32 @@ class ElementView(tk.Frame):
         self.selected = None
         self.entries = {}
         # title
-        title_bot = tk.Button(self, text=title, relief="ridge")
+        title_bot = tk.Button(self, text=title, font=("TkCaptionFont", 12), relief="ridge")
         
         # frame definition
         self.grid_columnconfigure(0, weight=2)
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(2, weight=1)
 
-        entry_frame = tk.Frame(self, bd=4, relief="groove")
-        command_frame = tk.Frame(self, bd=4, relief="groove")
+        top_frame = tk.Frame(self, bd=4, relief="groove")
         list_frame = tk.Frame(self, bd=4, relief="groove")
+        command_frame = tk.Frame(self, bd=4, relief="groove")
+        entry_frame = tk.Frame(self, bd=4, relief="groove")
        
+        top_frame.grid(row=0, column=0, columnspan=2, sticky="ew")
         title_bot.grid(row=0, column=0, columnspan=2, sticky="ew")
-        entry_frame.grid(row=1, column=0, sticky="nsew")
+        list_frame.grid(row=1, column=0, sticky="nsew")
         command_frame.grid(row=1, column=1, sticky="nsew")
-        list_frame.grid(row=2, column=0, columnspan=2, sticky="nsew")
+        entry_frame.grid(row=2, column=0, columnspan=2, sticky="nsew")
+        
+        # title
+        top_frame.columnconfigure(0, weight=1)
+        top_frame.columnconfigure(1, weight=0)
+        title_button = tk.Button(top_frame, text="Recetas", font=("TkCaptionFont", 12), relief="flat")
+        close_button = tk.Button(top_frame, text="X", command=self.close)
+
+        title_button.grid(row=0, column=0, sticky="ew")
+        close_button.grid(row=0, column=1, sticky="e")
 
         # formulario de entrada
         for i, field in enumerate(field_definition):
@@ -47,11 +58,9 @@ class ElementView(tk.Frame):
         # command buttons
         save_button = tk.Button(command_frame, text="Guardar", command=self.save_obj)
         delete_button = tk.Button(command_frame, text="Eliminar", command=self.delete_obj)
-        close_button = tk.Button(command_frame, text="X", command=self.close)
-        
-        close_button.pack(anchor="ne")
-        save_button.pack()
-        delete_button.pack(pady=30)
+
+        save_button.pack(expand=True)
+        delete_button.pack(expand=True)
 
         # variable tk que almacene lista elementos para ser mostrada en el listbox
         self.items_list = tk.Variable(value=[])    

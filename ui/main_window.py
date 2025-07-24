@@ -5,9 +5,10 @@ from ui.views.recipes_view import *
 class KitchenApp():
     def __init__(self):
         self.root = tk.Tk()
-        self.root.title("K I T C H E N")
-        self.root.minsize(800, 600)
-        self.root.geometry("800x600")
+        self.root.title(" 🔪 K I T C H E N   A S S I S T A N T")
+        self.root.minsize(1024, 900)
+        self.root.geometry("1024x900")
+        self.root.state("zoomed")
         
     def add_frame(self, bd, relief, padx, pady):
         frame = tk.Frame(
@@ -27,6 +28,7 @@ class KitchenApp():
             bd=4,
             relief="raised",
             pady=5,
+            font=("TkMenuFont", 10),
             command=command)
         btn.pack(fill="both", pady=5)
         return btn        
@@ -47,17 +49,16 @@ class KitchenApp():
         self.create_view(Ingredient, [{"label": "Nombre:", "field": "name"}], "Ingredientes")
 
     def recipe_crud(self):
-        if hasattr(self, 'recipes_view') and self.recipes_view.winfo_exists():
-            self.recipes_view.destroy()
+        if hasattr(self, 'recipe_view') and self.recipe_view.winfo_exists():
+            self.recipe_view.destroy()
         self.recipe_view = RecipeView(self.root)
         self.recipe_view.pack(side=tk.RIGHT, expand=True, fill=tk.BOTH)  
 
     def create_view(self, cls, field_definition, title):
         if hasattr(self, 'elements_view') and self.elements_view.winfo_exists():
-            self.elements_view.destroy()
+            self.elements_view.destroy() 
         self.elements_view = ElementView(self.root, cls, field_definition, title)
         self.elements_view.pack(side=tk.RIGHT, expand=True, fill=tk.BOTH)  
     
         
-    
     

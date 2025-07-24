@@ -24,7 +24,7 @@ def createDatabase():
                     id INTEGER PRIMARY KEY,
                     name TEXT unique
         """,
-        "steps": """
+        "step": """
                    id INTEGER PRIMARY KEY,
                    recipe_id INTEGER,
                    ingredient_id INTEGER,

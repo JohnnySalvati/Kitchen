@@ -17,9 +17,7 @@ class ElementView(tk.Frame):
         self.cls = cls
         self.selected = None
         self.entries = {}
-        # title
-        title_bot = tk.Button(self, text=title, font=("TkCaptionFont", 12), relief="ridge")
-        
+       
         # frame definition
         self.grid_columnconfigure(0, weight=2)
         self.grid_columnconfigure(1, weight=1)
@@ -31,7 +29,6 @@ class ElementView(tk.Frame):
         entry_frame = tk.Frame(self, bd=4, relief="groove")
        
         top_frame.grid(row=0, column=0, columnspan=2, sticky="ew")
-        title_bot.grid(row=0, column=0, columnspan=2, sticky="ew")
         list_frame.grid(row=1, column=0, sticky="nsew")
         command_frame.grid(row=1, column=1, sticky="nsew")
         entry_frame.grid(row=2, column=0, columnspan=2, sticky="nsew")
@@ -39,7 +36,7 @@ class ElementView(tk.Frame):
         # title
         top_frame.columnconfigure(0, weight=1)
         top_frame.columnconfigure(1, weight=0)
-        title_button = tk.Button(top_frame, text="Recetas", font=("TkCaptionFont", 12), relief="flat")
+        title_button = tk.Button(top_frame, text=title, font=("TkCaptionFont", 12), relief="flat")
         close_button = tk.Button(top_frame, text="X", command=self.close)
 
         title_button.grid(row=0, column=0, sticky="ew")

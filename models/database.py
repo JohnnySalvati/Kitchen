@@ -81,10 +81,10 @@ class Recipe(PersistentModel):
     # table_name = "recipe"
     # table_fields = ["name"]
     
-    def __init__(self, name, steps=[], id=None):
+    def __init__(self, name, steps=None, id=None):
         self.id = id
         self.name = name
-        self.steps = steps # lista de objetos Step
+        self.steps = [] if steps is None else steps
 
     def save(self):
         conn = self.get_connection()
@@ -114,6 +114,14 @@ class Recipe(PersistentModel):
         # elimina los Step
         for step in self.steps:
             step.delete()
+
+    def add_step(self, step):
+        self.steps.append(step)
+        step.save()
+    
+    def delete_step(self, step):
+        self.steps.remove(step)
+        step.delete()
 
     @classmethod
     def get_by_id(cls, id):
@@ -233,6 +241,29 @@ class Step(PersistentModel):
                 id = row[0]
             ))
         return all_data
+    
+    @classmethod
+    def get_by_id(cls, id):
+        if id is None:
+            return
+        conn = cls.get_connection()
+        cursor = conn.cursor()
+        query = "SELECT id, recipe_id, ingredient_id, unit_id, quantity, action_id, resultIngredient_id, resultUnit_id, resultQuantity FROM step WHERE id=?"
+        cursor.execute(query, (id,))
+        row = cursor.fetchone()
+        conn.close()
+        step =cls(
+                recipe_id = row[1],
+                ingredient = Ingredient.get_by_id(row[2]),
+                unit = Unit.get_by_id(row[3]),
+                quantity = row[4],
+                action = Action.get_by_id(row[5]),
+                resultIngredient = Ingredient.get_by_id(row[6]),
+                resultUnit = Unit.get_by_id(row[7]),
+                resultQuantity = row[8],
+                id = row[0]
+            )
+        return step
 class Unit(PersistentModel):
     table_name = "unit"
     table_fields = ["name", "short_name"]

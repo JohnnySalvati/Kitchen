@@ -5,8 +5,8 @@ from models.database import *
 class RecipeView(tk.Frame):
     def __init__(self, parent): 
         super().__init__(parent, bd=4, relief="groove")
-        self.selected = None
-        
+        self.recipe_selected = None
+        self.step_selected = None        
 
         # frame definition
         self.grid_columnconfigure(0, weight=2)
@@ -37,17 +37,16 @@ class RecipeView(tk.Frame):
 
         # frames del formulario de entrada
         recipe_name_frame = tk.LabelFrame(entry_frame, text="Receta", bd=2, relief="ridge")
-        step_data_frame = tk.LabelFrame(entry_frame,text="Paso", bd=2, relief="ridge")
-        step_data_frame.grid_columnconfigure(0, weight=1)
-        step_data_frame.grid_columnconfigure(1, weight=1)
-        step_data_frame.grid_columnconfigure(2, weight=1)
+        self.step_data_frame = tk.LabelFrame(entry_frame,text="Paso", bd=2, relief="ridge")
+        self.step_data_frame.grid_columnconfigure(0, weight=1)
+        self.step_data_frame.grid_columnconfigure(1, weight=1)
+        self.step_data_frame.grid_columnconfigure(2, weight=1)
 
-        source_frame = tk.LabelFrame(step_data_frame, text="Original", bd=2, relief="ridge")
-        action_frame = tk.Frame(step_data_frame, bd=2, relief="ridge")
-        result_frame = tk.LabelFrame(step_data_frame, text="Resultante", bd=2, relief="ridge")
+        source_frame = tk.LabelFrame(self.step_data_frame, text="Original", bd=2, relief="ridge")
+        action_frame = tk.Frame(self.step_data_frame, bd=2, relief="ridge")
+        result_frame = tk.LabelFrame(self.step_data_frame, text="Resultante", bd=2, relief="ridge")
 
         recipe_name_frame.pack(anchor="nw", padx=5, pady=20)
-        step_data_frame.pack(anchor="center", padx=5, pady=20)
 
         source_frame.grid(row=1, column=0, sticky="nse", padx=20, pady=10)
         action_frame.grid(row=1, column=1, padx=20, pady=10)
@@ -81,14 +80,14 @@ class RecipeView(tk.Frame):
         self.action_combobox = ttk.Combobox(action_frame, values=RecipeView.load_action_values(), state="readonly")
         self.result_ingredient_combobox = ttk.Combobox(result_frame, values=RecipeView.load_ingredient_values(), state="readonly")
         self.result_unit_combobox = ttk.Combobox(result_frame, values=RecipeView.load_unit_values(), state="readonly")
-        self.result_quantity_combobox = tk.Entry(result_frame, width=5)
+        self.result_quantity = tk.Entry(result_frame, width=5)
 
         # agrego llamadas para actualizar valores de los combobox cuando reciben el foco
-        self.source_ingredient_combobox.bind("<FocusIn>", self.update_ingredient_values)
-        self.source_unit_combobox.bind("<FocusIn>", self.update_unit_values)
-        self.action_combobox.bind("<FocusIn>", self.update_action_values)
-        self.result_ingredient_combobox.bind("<FocusIn>", self.update_ingredient_values)
-        self.result_unit_combobox.bind("<FocusIn>", self.update_unit_values)
+        self.source_ingredient_combobox.bind("<Button-1>", self.update_ingredient_values)
+        self.source_unit_combobox.bind("<Button-1>", self.update_unit_values)
+        self.action_combobox.bind("<Button-1>", self.update_action_values)
+        self.result_ingredient_combobox.bind("<Button-1>", self.update_ingredient_values)
+        self.result_unit_combobox.bind("<Button-1>", self.update_unit_values)
 
         self.source_ingredient_combobox.grid(row=0, column=1, sticky="w", padx=(5, 40), pady=5)
         self.source_unit_combobox.grid(row=1, column=1, sticky="w", padx=(5, 40), pady=5)
@@ -96,7 +95,7 @@ class RecipeView(tk.Frame):
         self.action_combobox.grid(row=0, column=1, sticky="w", padx=(5, 40), pady=5)
         self.result_ingredient_combobox.grid(row=0, column=1, sticky="w", padx=(5, 40), pady=5)
         self.result_unit_combobox.grid(row=1, column=1, sticky="w", padx=(5, 40), pady=5)
-        self.result_quantity_combobox.grid(row=2, column=1, sticky="w", padx=(5, 40), pady=5)
+        self.result_quantity.grid(row=2, column=1, sticky="w", padx=(5, 40), pady=5)
 
         # command buttons
         save_button = tk.Button(command_frame, text="Guardar", command=self.save_obj)
@@ -110,7 +109,7 @@ class RecipeView(tk.Frame):
         # lista de elementos
         recipe_scrollbar = ttk.Scrollbar(recipe_frame, orient=tk.VERTICAL)
         self.recipe_listbox = tk.Listbox(recipe_frame, listvariable=self.recipe_list, yscrollcommand=recipe_scrollbar.set, activestyle=tk.NONE)
-        self.recipe_listbox.bind("<<ListboxSelect>>", self.on_select_recipe)
+        self.recipe_listbox.bind("<ButtonRelease-1>", self.on_select_recipe)
         recipe_scrollbar.config(command=self.recipe_listbox.yview)
 
         recipe_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
@@ -121,13 +120,13 @@ class RecipeView(tk.Frame):
         # lista de step
         step_scrollbar = ttk.Scrollbar(step_frame, orient=tk.VERTICAL)
         self.step_listbox = tk.Listbox(step_frame, listvariable=self.step_list, yscrollcommand=step_scrollbar.set, activestyle=tk.NONE)
-        self.step_listbox.bind("<<ListboxSelect>>", self.on_select_step)
+        self.step_listbox.bind("<ButtonRelease-1>", self.on_select_step)
         step_scrollbar.config(command=self.step_listbox.yview)
 
         step_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         self.step_listbox.pack(expand=True, fill=tk.BOTH)
         
-        self.load_list()
+        self.load_recipe_list()
 
     def update_ingredient_values(self, event=None):
         self.source_ingredient_combobox['values'] = RecipeView.load_ingredient_values()
@@ -140,6 +139,7 @@ class RecipeView(tk.Frame):
     def update_unit_values(self, event=None):
         self.source_unit_combobox['values'] = RecipeView.load_unit_values()
         self.result_unit_combobox['values'] = RecipeView.load_unit_values()
+        
     @staticmethod
     def load_ingredient_values():
         return [f"{i.id}: {i.name}" for i in Ingredient.get_all()]
@@ -152,15 +152,14 @@ class RecipeView(tk.Frame):
     def load_unit_values():
         return [f"{u.id}: {u.name}" for u in Unit.get_all()]
 
-    def load_list(self):
+    def load_recipe_list(self):
         recipes = Recipe.get_all()
         items = [f"{recipe.id}: {recipe.name}" for recipe in recipes]
         items.append("+ Nuevo...")
         self.recipe_list.set(items)
 
-    def load_step(self, recipe_id):
-        steps = Step.get_by_recipe(recipe_id)
-        items = [f"{step.ingredient.name}: {step.action.name}" for step in steps]
+    def load_step_list(self):
+        items = [f"{step.id}: {step.ingredient.name}: {step.action.name}" for step in self.recipe_selected.steps]
         items.append("+ Nuevo...")
         self.step_list.set(items)
             
@@ -168,57 +167,114 @@ class RecipeView(tk.Frame):
         name = self.entry_name.get().strip()
         if not name:
             return
-        if self.selected:
-            self.selected.name = self.entry_name.get().strip()
-            self.selected.save()
+        if self.recipe_selected:
+            self.recipe_selected.name = self.entry_name.get().strip()
+            obj = self.recipe_selected
         else:
             # Crear un nuevo objeto con los datos del formulario
             obj = Recipe(self.entry_name.get().strip(),[])
-            obj.save()
-        self.clear_fields()
+        obj.save()
+        if self.step_selected:
+            obj.add_step(self.step_selected)
+        else:
+            step = Step(obj.id,
+                        self.get_source_ingredient(),
+                        self.get_source_unit(),
+                        self.get_source_quantity(),
+                        self.get_action(),
+                        self.get_result_ingredient(),
+                        self.get_result_unit(),
+                        self.get_result_quantity(),
+                        )
+            obj.add_step(step)
         self.entry_name.focus()
-        self.load_list()
+        self.load_recipe_list()
 
     def delete_obj(self):
-        if self.selected:
-            self.selected.delete()
-            self.selected = None
-            self.clear_fields()
-            self.load_list()
+        if self.recipe_selected:
+            self.recipe_selected.delete()
+            self.recipe_selected = None
+            self.entry_name.delete(0, tk.END)
+            self.load_recipe_list()
 
     def on_select_recipe(self, event):
         try:
+            self.step_data_frame.forget() # oculto el frame con los datos del step 
             index = self.recipe_listbox.curselection()[0]
             data = self.recipe_listbox.get(index)
-            self.clear_fields()
+            self.entry_name.delete(0, tk.END)
             if data == "+ Nuevo...":
-                self.selected = None
+                self.recipe_selected = None
             else:
                 id = int(data.split(":")[0])
-                self.selected = Recipe.get_by_id(id)
-                self.entry_name.insert(0, self.selected.name)
-                self.load_step(id)
+                self.recipe_selected = Recipe.get_by_id(id)
+                self.entry_name.insert(0, self.recipe_selected.name)
+                self.load_step_list()
             self.after(10, lambda: self.entry_name.focus())
         except IndexError:
             pass
     
     def on_select_step(self, event):
         try:
+            self.step_data_frame.pack(anchor="center", padx=5, pady=20) # muestro el frame con los datos del step 
             index = self.step_listbox.curselection()[0]
             data = self.step_listbox.get(index)
-            self.clear_fields()
+            self.clear_step_fields() 
             if data == "+ Nuevo...":
-                self.selected = None
+                step = None
             else:
                 id = int(data.split(":")[0])
-                self.selected = Recipe.get_by_id(id)
-                self.entry_name.insert(0, self.selected.name)
-            self.after(10, lambda: self.entry_name.focus())
+                step = Step.get_by_id(id)
+                self.source_ingredient_combobox.set(f"{step.ingredient.id}: {step.ingredient.name}")
+                self.source_unit_combobox.set(f"{step.unit.id}: {step.unit.name}")
+                self.source_quantity.insert(0, step.quantity)
+                self.action_combobox.set(f"{step.action.id}: {step.action.name}")
+                self.result_ingredient_combobox.set(f"{step.resultIngredient.id}: {step.ingredient.name}")
+                self.result_unit_combobox.set(f"{step.resultUnit.id}: {step.resultUnit.name}")
+                self.result_quantity.insert(0, step.resultQuantity)
+            self.step_selected = step
         except IndexError:
             pass
-
-    def clear_fields(self):
-        self.entry_name.delete(0, tk.END)
+    
+    def clear_step_fields(self):
+        self.source_ingredient_combobox.set("")
+        self.source_unit_combobox.set("")
+        self.source_quantity.delete(0, tk.END)
+        self.action_combobox.set("")
+        self.result_ingredient_combobox.set("")
+        self.result_unit_combobox.set("")
+        self.result_quantity.delete(0, tk.END)
 
     def close(self):
         self.destroy()
+
+    def get_source_ingredient(self):
+        id = int(self.source_ingredient_combobox.get().split(":")[0])
+        return Ingredient.get_by_id(id)
+
+    def get_result_ingredient(self):
+        id = int(self.result_ingredient_combobox.get().split(":")[0])
+        return Ingredient.get_by_id(id)
+
+    def get_source_unit(self):
+        id = int(self.source_unit_combobox.get().split(":")[0])
+        return Unit.get_by_id(id)
+
+    def get_result_unit(self):
+        id = int(self.result_unit_combobox.get().split(":")[0])
+        return Unit.get_by_id(id)
+
+    def get_source_quantity(self):
+        q = float(self.source_quantity.get())
+        return q
+    
+    def get_result_quantity(self):
+        q = float(self.result_quantity.get())
+        return q
+    
+    def get_action(self):
+        id = int(self.action_combobox.get().split(":")[0])
+        return Action.get_by_id(id)
+
+    
+    

@@ -2,7 +2,7 @@
 import tkinter as tk
 from tkinter import ttk
 from models.database import *
-
+from ui.views.widgets.seeker import Seeker
 class ElementView(tk.Frame):
     """ 
     cls: es la clase para el CRUD
@@ -56,6 +56,15 @@ class ElementView(tk.Frame):
         save_button = tk.Button(command_frame, text="Guardar", command=self.save_obj)
         delete_button = tk.Button(command_frame, text="Eliminar", command=self.delete_obj)
 
+        search_frame = tk.Frame(command_frame)
+        search_label = tk.Label(search_frame, text="Busqueda:", anchor="e")
+        search_label_keys = tk.Label(search_frame, width=20, anchor="w")
+        search_label.pack(side="left")
+        search_label_keys.pack(side="left")
+
+        search_frame.pack(expand=True)
+        
+
         save_button.pack(expand=True)
         delete_button.pack(expand=True)
 
@@ -65,13 +74,19 @@ class ElementView(tk.Frame):
         # lista de elementos
         scrollbar = ttk.Scrollbar(list_frame, orient=tk.VERTICAL)
         self.listbox = tk.Listbox(list_frame, listvariable=self.items_list, yscrollcommand=scrollbar.set, activestyle=tk.NONE)
-        self.listbox.bind("<<ListboxSelect>>", self.on_select)
+        self.listbox.bind("<ButtonRelease-1>", self.on_select)
+        self.listbox.bind("<Return>", self.on_select)
+        # buscador para lista de elementos
+        self.listbox_search = Seeker(self.listbox, search_label_keys)
+        self.listbox.bind("<Key>", self.listbox_search.search)
+
         scrollbar.config(command=self.listbox.yview)
 
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         self.listbox.pack(expand=True, fill=tk.BOTH)
         
         self.load_all()
+        self.listbox.focus_set()
 
     def load_all(self):
         elements = self.cls.get_all()
@@ -115,7 +130,7 @@ class ElementView(tk.Frame):
                 self.selected = self.cls.get_by_id(id)
                 for field, entry in self.entries.items():
                     entry.insert(0, getattr(self.selected, field)) 
-            self.after(10, lambda: self.entries["name"].focus())
+            # self.after(10, lambda: self.entries["name"].focus())
         except IndexError:
             pass
 

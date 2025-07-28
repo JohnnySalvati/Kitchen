@@ -120,7 +120,7 @@ class Recipe(PersistentModel):
         step.save()
     
     def delete_step(self, step):
-        self.steps.remove(step)
+        self.steps = [s for s in self.steps if s.id != step.id]
         step.delete()
 
     @classmethod
@@ -160,7 +160,7 @@ class Step(PersistentModel):
                     "resultUnit_id",
                     "resultQuantity"]
     
-    def __init__(self, recipe_id, ingredient, unit, quantity, action, resultIngredient, resultUnit, resultQuantity, id=None):
+    def __init__(self, recipe_id, ingredient=None, unit=None, quantity=None, action=None, resultIngredient=None, resultUnit=None, resultQuantity=None, id=None):
         self.id = id
         self.recipe_id = recipe_id
         self.ingredient = ingredient

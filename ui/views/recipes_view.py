@@ -1,13 +1,16 @@
-# recipes_view.py
+# recipes_vie
+from playsound import playsound
+import re
 import tkinter as tk
 from tkinter import ttk
+from tkinter import messagebox
 from models.database import *
+from ui.views.widgets.seeker import Seeker
 class RecipeView(tk.Frame):
     def __init__(self, parent): 
         super().__init__(parent, bd=4, relief="groove")
         self.recipe_selected = None
-        self.step_selected = None        
-
+        
         # frame definition
         self.grid_columnconfigure(0, weight=2)
         self.grid_columnconfigure(1, weight=1)
@@ -98,22 +101,43 @@ class RecipeView(tk.Frame):
         self.result_quantity.grid(row=2, column=1, sticky="w", padx=(5, 40), pady=5)
 
         # command buttons
-        save_button = tk.Button(command_frame, text="Guardar", command=self.save_obj)
-        delete_button = tk.Button(command_frame, text="Eliminar", command=self.delete_obj)
+        self.save_recipe_button = tk.Button(command_frame, text="Guardar Receta", command=self.save_recipe)
+        self.delete_recipe_button = tk.Button(command_frame, text="Eliminar Receta", command=self.delete_recipe)
+        self.save_step_button = tk.Button(command_frame, text="Guardar Paso", command=self.save_step)
+        self.delete_step_button = tk.Button(command_frame, text="Eliminar Paso", command=self.delete_step)
+        search_frame = tk.Frame(command_frame)
+        search_label = tk.Label(search_frame, text="Busqueda:", anchor="e")
+        search_label_keys = tk.Label(search_frame, width=20, anchor="w")
+        search_label.pack(side="left")
+        search_label_keys.pack(side="left")
 
-        save_button.pack(expand=True )
-        delete_button.pack(expand=True)
+        search_frame.pack(expand=True)
+        self.save_recipe_button.pack(expand=True )
+        self.delete_recipe_button.pack(expand=True)
+        self.save_step_button.pack(expand=True )
+        self.delete_step_button.pack(expand=True)
+        
+        # oculto los command buttons para step
+        self.save_step_button.forget()
+        self.delete_step_button.forget()
 
         # variable tk que almacene lista elementos para ser mostrada en el listbox
-        self.recipe_list = tk.Variable(value=[])    
+        self.recipe_list = tk.Variable(value=[])
+        
+
         # lista de elementos
         recipe_scrollbar = ttk.Scrollbar(recipe_frame, orient=tk.VERTICAL)
         self.recipe_listbox = tk.Listbox(recipe_frame, listvariable=self.recipe_list, yscrollcommand=recipe_scrollbar.set, activestyle=tk.NONE)
         self.recipe_listbox.bind("<ButtonRelease-1>", self.on_select_recipe)
+        self.recipe_listbox.bind("<Return>", self.on_select_recipe)
         recipe_scrollbar.config(command=self.recipe_listbox.yview)
 
         recipe_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         self.recipe_listbox.pack(expand=True, fill=tk.BOTH)
+
+        # buscador para lista de recetas
+        self.recipe_search = Seeker(self.recipe_listbox, search_label_keys)
+        self.recipe_listbox.bind("<Key>", self.recipe_search.search)
         
         # variable tk que almacene lista elementos para ser mostrada en el step
         self.step_list = tk.Variable(value=[])    
@@ -121,19 +145,24 @@ class RecipeView(tk.Frame):
         step_scrollbar = ttk.Scrollbar(step_frame, orient=tk.VERTICAL)
         self.step_listbox = tk.Listbox(step_frame, listvariable=self.step_list, yscrollcommand=step_scrollbar.set, activestyle=tk.NONE)
         self.step_listbox.bind("<ButtonRelease-1>", self.on_select_step)
+        self.step_listbox.bind("<Return>", self.on_select_step)
         step_scrollbar.config(command=self.step_listbox.yview)
 
         step_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         self.step_listbox.pack(expand=True, fill=tk.BOTH)
-        
+
+        # buscador para lista de pasos
+        self.step_search = Seeker(self.step_listbox, search_label_keys)        
+        self.step_listbox.bind("<Key>", self.step_search.search)
+
         self.load_recipe_list()
+        self.recipe_listbox.focus_set()
 
     def update_ingredient_values(self, event=None):
         self.source_ingredient_combobox['values'] = RecipeView.load_ingredient_values()
         self.result_ingredient_combobox['values'] = RecipeView.load_ingredient_values()
     
     def update_action_values(self, event=None):
-        self.action_combobox['values'] = RecipeView.load_action_values()
         self.action_combobox['values'] = RecipeView.load_action_values()
     
     def update_unit_values(self, event=None):
@@ -162,22 +191,16 @@ class RecipeView(tk.Frame):
         items = [f"{step.id}: {step.ingredient.name}: {step.action.name}" for step in self.recipe_selected.steps]
         items.append("+ Nuevo...")
         self.step_list.set(items)
-            
-    def save_obj(self):
-        name = self.entry_name.get().strip()
-        if not name:
+
+    def save_recipe(self):
+        self.recipe_selected.name = self.entry_name.get().strip()
+        if not self.recipe_selected.name:
             return
-        if self.recipe_selected:
-            self.recipe_selected.name = self.entry_name.get().strip()
-            obj = self.recipe_selected
-        else:
-            # Crear un nuevo objeto con los datos del formulario
-            obj = Recipe(self.entry_name.get().strip(),[])
-        obj.save()
-        if self.step_selected:
-            obj.add_step(self.step_selected)
-        else:
-            step = Step(obj.id,
+        self.recipe_selected.save()
+        self.load_recipe_list()
+        
+    def save_step(self):
+        step = Step(self.recipe_selected.id,
                         self.get_source_ingredient(),
                         self.get_source_unit(),
                         self.get_source_quantity(),
@@ -186,55 +209,65 @@ class RecipeView(tk.Frame):
                         self.get_result_unit(),
                         self.get_result_quantity(),
                         )
-            obj.add_step(step)
-        self.entry_name.focus()
-        self.load_recipe_list()
-
-    def delete_obj(self):
-        if self.recipe_selected:
-            self.recipe_selected.delete()
-            self.recipe_selected = None
-            self.entry_name.delete(0, tk.END)
-            self.load_recipe_list()
-
-    def on_select_recipe(self, event):
-        try:
-            self.step_data_frame.forget() # oculto el frame con los datos del step 
-            index = self.recipe_listbox.curselection()[0]
-            data = self.recipe_listbox.get(index)
-            self.entry_name.delete(0, tk.END)
-            if data == "+ Nuevo...":
+        self.recipe_selected.add_step(step)
+        self.load_step_list()
+        
+    def delete_recipe(self):
+        if messagebox.askokcancel("Eliminar receta", "¿ Estas seguro que deseas eliminar la receta y sus pasos ?"):
+            if self.recipe_selected.id:
+                self.recipe_selected.delete()
                 self.recipe_selected = None
-            else:
-                id = int(data.split(":")[0])
-                self.recipe_selected = Recipe.get_by_id(id)
-                self.entry_name.insert(0, self.recipe_selected.name)
-                self.load_step_list()
-            self.after(10, lambda: self.entry_name.focus())
-        except IndexError:
-            pass
-    
-    def on_select_step(self, event):
-        try:
-            self.step_data_frame.pack(anchor="center", padx=5, pady=20) # muestro el frame con los datos del step 
-            index = self.step_listbox.curselection()[0]
+                self.entry_name.delete(0, tk.END)
+                self.load_recipe_list()
+
+    def delete_step(self):
+        selection = self.step_listbox.curselection()
+        if not selection:
+            return
+        if messagebox.askokcancel("Eliminar paso", "¿ Estas seguro que deseas eliminar el paso ?"):
+            index = selection[0]
             data = self.step_listbox.get(index)
-            self.clear_step_fields() 
-            if data == "+ Nuevo...":
-                step = None
-            else:
+            if data != "+ Nuevo...":
                 id = int(data.split(":")[0])
                 step = Step.get_by_id(id)
-                self.source_ingredient_combobox.set(f"{step.ingredient.id}: {step.ingredient.name}")
-                self.source_unit_combobox.set(f"{step.unit.id}: {step.unit.name}")
-                self.source_quantity.insert(0, step.quantity)
-                self.action_combobox.set(f"{step.action.id}: {step.action.name}")
-                self.result_ingredient_combobox.set(f"{step.resultIngredient.id}: {step.ingredient.name}")
-                self.result_unit_combobox.set(f"{step.resultUnit.id}: {step.resultUnit.name}")
-                self.result_quantity.insert(0, step.resultQuantity)
-            self.step_selected = step
-        except IndexError:
-            pass
+                self.recipe_selected.delete_step(step)
+                self.clear_step_fields()
+                self.load_step_list()
+    
+    def on_select_recipe(self, event):
+        self.show_recipe_environment() # modifico el entorno para recipe
+        index = self.recipe_listbox.curselection()[0]
+        data = self.recipe_listbox.get(index)
+        self.entry_name.delete(0, tk.END)
+        self.step_search.clear()
+        if data == "+ Nuevo...":
+            self.recipe_selected = Recipe("")
+        else:
+            id = int(data.split(":")[0])
+            self.recipe_selected = Recipe.get_by_id(id)
+        self.entry_name.insert(0, self.recipe_selected.name)
+        self.load_step_list()
+        #self.after(10, lambda: self.entry_name.focus())
+        
+    def on_select_step(self, event):
+        if self.recipe_selected.id == None: # si la receta no esta guardada no pueden cargarse pasos
+            messagebox.showinfo("Antes de agregar pasos debes GUARDAR la receta")
+            return
+        self.show_step_environment() # modifico el entorno para step
+        index = self.step_listbox.curselection()[0]
+        data = self.step_listbox.get(index)
+        self.clear_step_fields() 
+        self.recipe_search.clear()
+        if data != "+ Nuevo...":
+            id = int(data.split(":")[0])
+            step = Step.get_by_id(id)
+            self.source_ingredient_combobox.set(f"{step.ingredient.id}: {step.ingredient.name}")
+            self.source_unit_combobox.set(f"{step.unit.id}: {step.unit.name}")
+            self.source_quantity.insert(0, step.quantity)
+            self.action_combobox.set(f"{step.action.id}: {step.action.name}")
+            self.result_ingredient_combobox.set(f"{step.resultIngredient.id}: {step.resultIngredient.name}")
+            self.result_unit_combobox.set(f"{step.resultUnit.id}: {step.resultUnit.name}")
+            self.result_quantity.insert(0, step.resultQuantity)
     
     def clear_step_fields(self):
         self.source_ingredient_combobox.set("")
@@ -276,5 +309,23 @@ class RecipeView(tk.Frame):
         id = int(self.action_combobox.get().split(":")[0])
         return Action.get_by_id(id)
 
+    def show_step_environment(self):
+        self.step_data_frame.pack(anchor="center", padx=5, pady=20) # muestro el frame con los datos del step 
+        # muestro command buttons para step
+        self.save_step_button.pack(expand=True )
+        self.delete_step_button.pack(expand=True)
+        # oculto los command buttons para recipe
+        self.save_recipe_button.forget()
+        self.delete_recipe_button.forget()
+        self.entry_name.config(state="disabled")
     
-    
+    def show_recipe_environment(self):
+        self.step_data_frame.forget()        # oculto el frame con los datos del step
+        # muestro command buttons para recipe
+        self.save_recipe_button.pack(expand=True )
+        self.delete_recipe_button.pack(expand=True)
+        # oculto los command buttons para step
+        self.save_step_button.forget()
+        self.delete_step_button.forget()
+        self.entry_name.config(state="normal")
+

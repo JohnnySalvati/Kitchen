@@ -107,7 +107,6 @@ class ElementView(tk.Frame):
             kwargs = {field: entry.get().strip() for field, entry in self.entries.items()}
             obj = self.cls(**kwargs)
             obj.save()
-        self.clear_fields()
         self.entries["name"].focus()
         self.load_all()
 
@@ -130,7 +129,7 @@ class ElementView(tk.Frame):
                 self.selected = self.cls.get_by_id(id)
                 for field, entry in self.entries.items():
                     entry.insert(0, getattr(self.selected, field)) 
-            # self.after(10, lambda: self.entries["name"].focus())
+            self.after(10, lambda: self.entries["name"].focus())
         except IndexError:
             pass
 

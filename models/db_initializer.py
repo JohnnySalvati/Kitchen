@@ -6,6 +6,8 @@ def createDatabase():
     conn = sqlite3.connect('kitchen.db')
     cursor = conn.cursor()
 
+# falta validar eliminacion en cascada
+
     tables = {
         "unit": """
                     id INTEGER PRIMARY KEY,
@@ -27,20 +29,26 @@ def createDatabase():
         "step": """
                    id INTEGER PRIMARY KEY,
                    recipe_id INTEGER,
-                   ingredient_id INTEGER,
-                   unit_id INTEGER,
-                   quantity REAL,
                    action_id INTEGER,
                    resultIngredient_id INTEGER,
                    resultUnit_id INTEGER,
                    resultQuantity REAL,
                    FOREIGN KEY(recipe_id) REFERENCES recipe(id),
-                   FOREIGN KEY(unit_id) REFERENCES unit(id),
                    FOREIGN KEY(action_id) REFERENCES action(id),
-                   FOREIGN KEY(ingredient_id) REFERENCES ingredient(id),
                    FOREIGN KEY(resultIngredient_id) REFERENCES ingredient(id),
                    FOREIGN KEY(resultUnit_id) REFERENCES unit(id)
-        """
+        """,
+        "source": """  
+                    id INTEGER PRIMARY KEY,
+                    step_id INTEGER,
+                    is_recipe INTEGER,
+                    ingredient_id INTEGER,
+                    unit_id INTEGER,
+                    quantity REAL,
+                    FOREIGN KEY(step_id) REFERENCES step(id),
+                    FOREIGN KEY(ingredient_id) REFERENCES ingredient(id),
+                    FOREIGN KEY(unit_id) REFERENCES unit(id)
+        """,
     }
 
     for name, definition in tables.items():

@@ -1,6 +1,5 @@
 # recipes_vie
 from playsound import playsound
-import re
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
@@ -180,7 +179,7 @@ class RecipeView(tk.Frame):
         self.load_recipe_list()
         
     def save_step(self):
-        self.flush_source_values()
+        self.flush_step_values()
         self.selected_step.save()
         self.load_step_list()
         
@@ -262,9 +261,9 @@ class RecipeView(tk.Frame):
         except ValueError:
             pass
 
-    def get_result_ingredient(self):
+    def set_result_ingredient(self):
         id = int(self.result_ingredient_combobox.get().split(":")[0])
-        return Ingredient.get_by_id(id)
+        self.selected_step.resultIngredient = Ingredient.get_by_id(id)
 
     def set_unit(self, event, row):
         try:
@@ -273,17 +272,17 @@ class RecipeView(tk.Frame):
         except ValueError:
             pass
 
-    def get_result_unit(self):
+    def set_result_unit(self):
         id = int(self.result_unit_combobox.get().split(":")[0])
-        return Unit.get_by_id(id)
+        self.selected_step.resultUnit = Unit.get_by_id(id)
 
     def set_quantity(self, event, row):
         q = float(self.comboboxes[row]["quantity"].get())
         self.selected_step.sources[row].quantity = q
     
-    def get_result_quantity(self):
+    def set_result_quantity(self):
         q = float(self.result_quantity.get())
-        return q
+        self.selected_step.resultQuantity = q
     
     def get_action(self):
         id = int(self.action_combobox.get().split(":")[0])
@@ -351,18 +350,21 @@ class RecipeView(tk.Frame):
         add_source_button.grid(row=len(step.sources)+1, column=0, padx=(10,0), pady=5)
 
     def add_source(self):
-        self.flush_source_values()
+        self.flush_step_values()
         self.selected_step.sources.append(Source(self.selected_step.id))
         self.show_sources()
 
     def del_source(self, row):
-        self.flush_source_values()
+        self.flush_step_values()
         del self.selected_step.sources[row]
         del self.comboboxes[row]
         self.show_sources()
 
-    def flush_source_values(self): # fuerza actualizar self.selected_step
+    def flush_step_values(self): # fuerza actualizar self.selected_step
         for row, widgets in enumerate(self.comboboxes):
             self.set_ingredient(None, row)
             self.set_unit(None, row)
             self.set_quantity(None, row)
+        self.set_result_ingredient()
+        self.set_result_unit()
+        self.set_result_quantity()

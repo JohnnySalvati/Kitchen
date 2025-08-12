@@ -45,9 +45,6 @@ class KitchenApp():
     def action_crud(self):
         self.create_view(Action, [{"label": "Nombre:", "field": "name"}], "Acciones")
 
-    def ingredient_crud(self):
-        self.create_view(Ingredient, [{"label": "Nombre:", "field": "name"}], "Ingredientes")
-
     def recipe_crud(self):
         if hasattr(self, 'recipe_view') and self.recipe_view.winfo_exists():
             self.recipe_view.destroy()

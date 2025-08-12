@@ -18,13 +18,10 @@ def createDatabase():
                     id INTEGER PRIMARY KEY,
                     name TEXT unique
         """,
-        "ingredient": """
-                    id INTEGER PRIMARY KEY,
-                    name TEXT unique
-        """,
         "recipe": """  
                     id INTEGER PRIMARY KEY,
-                    name TEXT unique
+                    name TEXT unique,
+                    price REAL
         """,
         "step": """
                    id INTEGER PRIMARY KEY,
@@ -35,7 +32,7 @@ def createDatabase():
                    resultQuantity REAL,
                    FOREIGN KEY(recipe_id) REFERENCES recipe(id),
                    FOREIGN KEY(action_id) REFERENCES action(id),
-                   FOREIGN KEY(resultIngredient_id) REFERENCES ingredient(id),
+                   FOREIGN KEY(resultIngredient_id) REFERENCES recipe(id),
                    FOREIGN KEY(resultUnit_id) REFERENCES unit(id)
         """,
         "source": """  
@@ -46,7 +43,7 @@ def createDatabase():
                     unit_id INTEGER,
                     quantity REAL,
                     FOREIGN KEY(step_id) REFERENCES step(id),
-                    FOREIGN KEY(ingredient_id) REFERENCES ingredient(id),
+                    FOREIGN KEY(ingredient_id) REFERENCES recipe(id),
                     FOREIGN KEY(unit_id) REFERENCES unit(id)
         """,
     }

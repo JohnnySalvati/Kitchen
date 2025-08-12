@@ -126,7 +126,7 @@ class ElementView(tk.Frame):
                 self.selected = None
             else:
                 id = int(data.split(":")[0])
-                self.selected = self.cls.get_by_id(id)
+                self.selected = self.cls.get_one("id", id)
                 for field, entry in self.entries.items():
                     entry.insert(0, getattr(self.selected, field)) 
             self.after(10, lambda: self.entries["name"].focus())

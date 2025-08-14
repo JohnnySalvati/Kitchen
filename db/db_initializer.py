@@ -1,9 +1,8 @@
-# db_initializer.py
+# db/db_initializer.py
+from db.db import get_connection
 
-import sqlite3
-
-def createDatabase():
-    conn = sqlite3.connect('kitchen.db')
+def create_database():
+    conn = get_connection()
     cursor = conn.cursor()
 
 # falta validar eliminacion en cascada
@@ -30,7 +29,7 @@ def createDatabase():
                    resultIngredient_id INTEGER,
                    resultUnit_id INTEGER,
                    resultQuantity REAL,
-                   FOREIGN KEY(recipe_id) REFERENCES recipe(id),
+                   FOREIGN KEY(recipe_id) REFERENCES recipe(id) ON DELETE CASCADE,
                    FOREIGN KEY(action_id) REFERENCES action(id),
                    FOREIGN KEY(resultIngredient_id) REFERENCES recipe(id),
                    FOREIGN KEY(resultUnit_id) REFERENCES unit(id)
@@ -42,7 +41,7 @@ def createDatabase():
                     ingredient_id INTEGER,
                     unit_id INTEGER,
                     quantity REAL,
-                    FOREIGN KEY(step_id) REFERENCES step(id),
+                    FOREIGN KEY(step_id) REFERENCES step(id) ON DELETE CASCADE,
                     FOREIGN KEY(ingredient_id) REFERENCES recipe(id),
                     FOREIGN KEY(unit_id) REFERENCES unit(id)
         """,

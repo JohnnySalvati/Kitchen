@@ -1,4 +1,5 @@
-# esta clase construye un buscador para ser utilizado en eventos de objetos listbox
+# this class build a seeker object for event management listboxes
+import winsound
 import re
 import tkinter as tk
 
@@ -14,18 +15,19 @@ class Seeker():
         if event.char.isprintable():
             self.buffer += event.char
             lista = self.listbox.get(0, tk.END)
-            # Construyo el patrón intercalando .* entre caracteres
-            pattern = '.*'.join(map(re.escape, self.buffer))  # ej: "rcpv" → r.*c.*p.*v
-            regex = re.compile(pattern, re.IGNORECASE)   # insensible a mayúsculas
+            # build the pattern by inserting .* between characters
+            pattern = '.*'.join(map(re.escape, self.buffer))  # e.g. "rcpv" → r.*c.*p.*v
+            regex = re.compile(pattern, re.IGNORECASE)   # case insensitive
             for index, item in enumerate(lista):
                 if re.search(regex, item):
                     self.show(index)
                     return "break"
             self.buffer = self.buffer[:-1]
-            #playsound("tap.wav")
+            winsound.PlaySound('tap.wav', winsound.SND_FILENAME)
         elif event.keysym == "BackSpace":
             self.buffer = self.buffer[:-1]
         elif event.keysym == "Escape":
+            winsound.PlaySound('pop.wav', winsound.SND_FILENAME)
             self.buffer = ""
         self.label.config(text=self.buffer)
 

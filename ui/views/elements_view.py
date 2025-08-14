@@ -1,7 +1,7 @@
 # elements_view.py
 import tkinter as tk
 from tkinter import ttk
-from models.database import *
+
 from ui.views.widgets.seeker import Seeker
 class ElementView(tk.Frame):
     """ 
@@ -12,10 +12,11 @@ class ElementView(tk.Frame):
             ...
             ]
     """
-    def __init__(self, parent, cls, field_definition, title): 
+    def __init__(self, parent, service, dto, field_definition, title): 
         super().__init__(parent, bd=4, relief="groove")
-        self.cls = cls
-        self.selected = None
+        self.service = service
+        self.dto = dto
+        self.selected = self.dto()
         self.entries = {}
        
         # frame definition
@@ -64,7 +65,6 @@ class ElementView(tk.Frame):
 
         search_frame.pack(expand=True)
         
-
         save_button.pack(expand=True)
         delete_button.pack(expand=True)
 
@@ -89,31 +89,27 @@ class ElementView(tk.Frame):
         self.listbox.focus_set()
 
     def load_all(self):
-        elements = self.cls.get_all()
+        elements = self.service.get_all()
         items = [f"{element.id}: {element.name}" for element in elements]
         items.append("+ Nuevo...")
         self.items_list.set(items)
         
     def save_obj(self):
-        name = self.entries["name"].get().strip()
-        if not name:
+        for field, entry in self.entries.items():
+            setattr(self.selected, field, entry.get().strip())
+        if not self.selected.name:
             return
-        if self.selected:
-            for field, entry in self.entries.items():
-                setattr(self.selected, field, entry.get().strip())
-            self.selected.save()
+        if self.selected.id:
+            self.service.update(self.selected)
         else:
             # Crear un nuevo objeto con los datos del formulario
-            kwargs = {field: entry.get().strip() for field, entry in self.entries.items()}
-            obj = self.cls(**kwargs)
-            obj.save()
-        self.entries["name"].focus()
+            self.selected = self.service.create(self.selected)
         self.load_all()
 
     def delete_obj(self):
-        if self.selected:
-            self.selected.delete()
-            self.selected = None
+        if self.selected.id:
+            self.service.delete(self.selected.id)
+            self.selected = self.dto()
             self.clear_fields()
             self.load_all()
 
@@ -123,13 +119,12 @@ class ElementView(tk.Frame):
             data = self.listbox.get(index)
             self.clear_fields()
             if data == "+ Nuevo...":
-                self.selected = None
+                self.selected = self.dto()
             else:
                 id = int(data.split(":")[0])
-                self.selected = self.cls.get_one("id", id)
+                self.selected = self.service.get_by_id(id)
                 for field, entry in self.entries.items():
                     entry.insert(0, getattr(self.selected, field)) 
-            self.after(10, lambda: self.entries["name"].focus())
         except IndexError:
             pass
 

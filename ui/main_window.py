@@ -2,6 +2,11 @@
 import tkinter as tk
 from ui.views.elements_view import *
 from ui.views.recipes_view import *
+from services.action_service import ActionService
+from services.unit_service import UnitService
+from dto.unit_dto import UnitDTO
+from dto.action_dto import ActionDTO
+
 class KitchenApp():
     def __init__(self):
         self.root = tk.Tk()
@@ -21,7 +26,7 @@ class KitchenApp():
         frame.pack(side=tk.LEFT, anchor="nw", padx=10, pady=10)
         return frame
         
-    def add_button(self, parent, text, command=None):
+    def add_button(self, parent, text, command):
         btn = tk.Button(
             parent,
             text=text,
@@ -34,7 +39,9 @@ class KitchenApp():
         return btn        
     
     def unit_crud(self):
-        self.create_view(Unit, 
+        self.unit_service = UnitService()
+        self.create_view(self.unit_service, 
+                        UnitDTO,
                         [
                         {"label": "Nombre:", "field": "name"},
                         {"label": "Abreviatura:", "field": "short_name"}
@@ -43,7 +50,17 @@ class KitchenApp():
                     )
 
     def action_crud(self):
-        self.create_view(Action, [{"label": "Nombre:", "field": "name"}], "Acciones")
+        self.action_service = ActionService()
+        self.create_view(self.action_service,
+                         ActionDTO,
+                        [{"label": "Nombre:", "field": "name"}],
+                        "Acciones")
+
+    def create_view(self, service, dto, field_definition, title):
+        if hasattr(self, 'elements_view') and self.elements_view.winfo_exists():
+            self.elements_view.destroy() 
+        self.elements_view = ElementView(self.root, service, dto, field_definition, title)
+        self.elements_view.pack(side=tk.RIGHT, expand=True, fill=tk.BOTH)  
 
     def recipe_crud(self):
         if hasattr(self, 'recipe_view') and self.recipe_view.winfo_exists():
@@ -51,11 +68,6 @@ class KitchenApp():
         self.recipe_view = RecipeView(self.root)
         self.recipe_view.pack(side=tk.RIGHT, expand=True, fill=tk.BOTH)  
 
-    def create_view(self, cls, field_definition, title):
-        if hasattr(self, 'elements_view') and self.elements_view.winfo_exists():
-            self.elements_view.destroy() 
-        self.elements_view = ElementView(self.root, cls, field_definition, title)
-        self.elements_view.pack(side=tk.RIGHT, expand=True, fill=tk.BOTH)  
     
         
     

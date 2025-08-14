@@ -1,10 +1,10 @@
 # main.py
-from models.db_initializer import createDatabase
+from db.db_initializer import create_database
 from ui.main_window import KitchenApp
 
 def main():
     # Creates the database if it does not exist
-    createDatabase()
+    create_database()
 
     # Create UI
     ui = KitchenApp()

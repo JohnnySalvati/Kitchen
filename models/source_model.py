@@ -1,10 +1,9 @@
 from models.persistent_model import PersistentModel
 
 class Source(PersistentModel):
-    def __init__(self, step_id, is_recipe=False, ingredient_id=None, ingredient=None, unit_id=None, unit=None, quantity=0 , id=None):
+    def __init__(self, step_id, ingredient_id=None, ingredient=None, unit_id=None, unit=None, quantity=0 , id=None):
         super().__init__(id)
         self.step_id = step_id
-        self.is_recipe = is_recipe
         self.ingredient_id = ingredient_id
         self._ingredient = None
         self.ingredient = ingredient
@@ -16,7 +15,6 @@ class Source(PersistentModel):
     table_name = "source"
     table_fields = [
                     "step_id",
-                    "is_recipe",
                     "ingredient_id",
                     "unit_id",
                     "quantity"

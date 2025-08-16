@@ -7,8 +7,12 @@ class UnitDTO:
     @classmethod
     def from_model(cls, unit_model):
         """Converts a Unit model to a DTO"""
-        return UnitDTO( unit_model.name, unit_model.short_name, unit_model.id)
+        return UnitDTO(unit_model.name,
+                        unit_model.short_name,
+                        unit_model.id)
 
     def to_model(self, UnitModelClass):
         """Converts this DTO to a Unit Model ready to persist"""
-        return UnitModelClass(self.name, self.short_name, self.id)
+        return UnitModelClass(name = self.name,
+                            short_name = self.short_name,
+                            id = self.id)

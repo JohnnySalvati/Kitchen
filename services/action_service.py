@@ -4,24 +4,26 @@ from dto.action_dto import ActionDTO
 
 class ActionService:
     def get_by_id(self, id):
-        unit = Action.get_one("id", id)
-        return ActionDTO.from_model(unit)
+        action = Action.get_one("id", id)
+        if not action.id:
+            raise ValueError(f"No exite accion con ID {id}")
+        return ActionDTO.from_model(action)
     
     def get_all(self):
-        units = Action.get_all()
-        return [ActionDTO.from_model(unit) for unit in units]
+        actions = Action.get_all()
+        return [ActionDTO.from_model(action) for action in actions]
     
     def delete(self, id):
-        unit = Action.get_one("id", id)
-        if unit.id:
-            unit.delete()
+        action = Action.get_one("id", id)
+        if action.id:
+            action.delete()
+        else:
+            raise ValueError(f"No existe accion con ID {id}")
 
-    def create(self, unitDTO):
-        unit = ActionDTO.to_model(unitDTO, Action)
-        return unit.save()
-
-    def update(self, unitDTO):
-        unit = ActionDTO.to_model(unitDTO, Action)
-        unit.save()
+    def save(self, actionDTO):
+        if actionDTO.id is None and Action.get_one("name", actionDTO.name).id is not None:
+            raise ValueError("Ya existe una accion con ese nombre")
+        action = ActionDTO.to_model(actionDTO, Action)
+        return action.save()
 
    

@@ -94,7 +94,6 @@ class Step(PersistentModel):
 
     def save(self):
         from models.source_model import Source
-
         super().save() # almacena el Step
         # almacena los Sources
         # borramos todos los sources anteriores por consistencia con eliminados en memoria, se grabaran nuevamente los que estan en memoria
@@ -107,10 +106,7 @@ class Step(PersistentModel):
             source.save()
 
     def delete(self):
-        # elimina los Step
-        for source in self.sources:
-            self.delete_source(source)
-        super().delete() #elimina la receta
+        super().delete() #delete the step
 
     def delete_source(self, source):
         self.sources = [s for s in self.sources if s.id != source.id]

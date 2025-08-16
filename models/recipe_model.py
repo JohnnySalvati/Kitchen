@@ -50,6 +50,7 @@ class Recipe(PersistentModel):
         # stores Steps
         for step in self.steps:
             step.save()
+        return self
 
     def delete(self):
         # delete Steps
@@ -65,14 +66,16 @@ class Recipe(PersistentModel):
         self.steps = [s for s in self.steps if s.id != step.id]
         step.delete()
 
-    def is_complete(self): # Determines if Recipe is complete to be used like ingredient
+    def is_complete(self):
+        """Determines if Recipe is complete, to be used like ingredient"""
         if not self.name or not self.steps:
             return False
         if self.steps[-1].resultIngredient_id == self.id:
             return True
         return False
 
-    def has_ingredients(self):
+    def has_ingredients(self): 
+        """Determines if at least one step has ingredients"""
         for step in self.steps:
             if step.sources:
                 return True

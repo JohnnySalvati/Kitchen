@@ -15,12 +15,8 @@ class UnitService:
         if unit.id:
             unit.delete()
 
-    def create(self, unitDTO):
+    def save(self, unitDTO):
         unit = UnitDTO.to_model(unitDTO, Unit)
         return unit.save()
-
-    def update(self, unitDTO):
-        unit = UnitDTO.to_model(unitDTO, Unit)
-        unit.save()
 
    

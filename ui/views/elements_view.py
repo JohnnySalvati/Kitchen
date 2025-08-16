@@ -1,7 +1,7 @@
 # elements_view.py
 import tkinter as tk
 from tkinter import ttk
-
+from tkinter import messagebox
 from ui.views.widgets.seeker import Seeker
 class ElementView(tk.Frame):
     """ 
@@ -89,7 +89,10 @@ class ElementView(tk.Frame):
         self.listbox.focus_set()
 
     def load_all(self):
-        elements = self.service.get_all()
+        try:
+            elements = self.service.get_all()
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
         items = [f"{element.id}: {element.name}" for element in elements]
         items.append("+ Nuevo...")
         self.items_list.set(items)
@@ -97,18 +100,19 @@ class ElementView(tk.Frame):
     def save_obj(self):
         for field, entry in self.entries.items():
             setattr(self.selected, field, entry.get().strip())
-        if not self.selected.name:
-            return
-        if self.selected.id:
-            self.service.update(self.selected)
-        else:
-            # Crear un nuevo objeto con los datos del formulario
-            self.selected = self.service.create(self.selected)
+        try:
+            self.service.save(self.selected)
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
+        self.clear_fields()
         self.load_all()
 
     def delete_obj(self):
         if self.selected.id:
-            self.service.delete(self.selected.id)
+            try:
+                self.service.delete(self.selected.id)
+            except Exception as e:
+                messagebox.showerror("Error", str(e))
             self.selected = self.dto()
             self.clear_fields()
             self.load_all()
@@ -122,7 +126,10 @@ class ElementView(tk.Frame):
                 self.selected = self.dto()
             else:
                 id = int(data.split(":")[0])
-                self.selected = self.service.get_by_id(id)
+                try:
+                    self.selected = self.service.get_by_id(id)
+                except Exception as e:
+                    messagebox.showerror("Error", str(e))
                 for field, entry in self.entries.items():
                     entry.insert(0, getattr(self.selected, field)) 
         except IndexError:

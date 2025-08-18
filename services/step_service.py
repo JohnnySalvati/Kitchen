@@ -16,5 +16,5 @@ class StepService:
             step.delete()
 
     def save(self, stepDTO):
-        step = StepDTO.to_model(stepDTO, Step)
+        step = StepDTO.to_model(stepDTO)
         return step.save()

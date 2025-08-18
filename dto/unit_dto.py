@@ -11,8 +11,10 @@ class UnitDTO:
                         unit_model.short_name,
                         unit_model.id)
 
-    def to_model(self, UnitModelClass):
+    def to_model(self):
         """Converts this DTO to a Unit Model ready to persist"""
-        return UnitModelClass(name = self.name,
+        from models.unit_model import Unit
+
+        return Unit(name = self.name,
                             short_name = self.short_name,
                             id = self.id)

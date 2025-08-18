@@ -9,7 +9,7 @@ class RecipeService:
         if recipeDTO.price is None or recipeDTO.price < 0:
             raise ValueError("El precio no puede ser menor que 0")
         try:
-            recipe = RecipeDTO.to_model(recipeDTO, Recipe)
+            recipe = RecipeDTO.to_model(recipeDTO)
             return recipe.save()
         except Exception as e:
             raise RuntimeError(f"No se pudo crear la receta: {e}")

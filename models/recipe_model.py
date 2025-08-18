@@ -6,7 +6,7 @@ class Recipe(PersistentModel):
         super().__init__(id)
         self.name = name
         self.price = price
-        self.steps = [] if steps is None else steps
+        self.steps = steps if steps else []
 
     table_name = "recipe"
     table_fields = ["name", "price"]

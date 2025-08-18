@@ -23,7 +23,7 @@ class ActionService:
     def save(self, actionDTO):
         if actionDTO.id is None and Action.get_one("name", actionDTO.name).id is not None:
             raise ValueError("Ya existe una accion con ese nombre")
-        action = ActionDTO.to_model(actionDTO, Action)
+        action = ActionDTO.to_model(actionDTO)
         return action.save()
 
    

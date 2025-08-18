@@ -9,7 +9,9 @@ class ActionDTO:
         return ActionDTO(action_model.name,
                         action_model.id)
 
-    def to_model(self, ActionModelClass):
+    def to_model(self):
         """Converts this DTO to a Action Model ready to persist"""
-        return ActionModelClass(name = self.name,
+        from models.action_model import Action
+
+        return Action(name = self.name,
                                 id = self.id)

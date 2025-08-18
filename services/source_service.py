@@ -13,12 +13,12 @@ class SourceService:
         return [SourceDTO.from_model(source) for source in sources]
     
     def delete(self, id):
-        sources = Source.get_one("id", id)
-        if sources.id:
-            sources.delete()
+        source = Source.get_one("id", id)
+        if source.id:
+            source.delete()
         else:
             raise ValueError(f"No exite ingrediente original con ID {id}")
 
     def save(self, sourceDTO):
-        sources = SourceDTO.to_model(sourceDTO, Source)
-        return sources.save()
+        source = SourceDTO.to_model(sourceDTO)
+        return source.save()

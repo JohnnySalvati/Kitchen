@@ -1,7 +1,5 @@
-from models.step_model import Step
-
 class RecipeDTO:
-    def __init__(self, name: str="", price: float=0, steps: list[Step]=[], id=None):
+    def __init__(self, name: str="", price: float=0, steps=[], id=None):
         self.id = id
         self.name = name
         self.price = price
@@ -10,14 +8,21 @@ class RecipeDTO:
     @classmethod
     def from_model(cls, recipe_model):
         """Converts a Recipe model to a DTO"""
-        return RecipeDTO(recipe_model.name,
+        from dto.step_dto import StepDTO
+
+        return RecipeDTO(
+                        recipe_model.name,
                         recipe_model.price,
-                        recipe_model.steps,
+                        [StepDTO.from_model(step) for step in recipe_model.steps],
                         recipe_model.id)
 
-    def to_model(self, RecipeModelClass):
+    def to_model(self):
         """Converts this DTO to a Recipe Model ready to persist"""
-        return RecipeModelClass(name = self.name,
-                                price = self.price,
-                                steps = self.steps,
-                                id = self.id)
+        from models.recipe_model import Recipe
+
+        return Recipe(
+                    name = self.name,
+                    price = self.price,
+                    steps = [step.to_model() for step in self.steps],
+                    id = self.id)
+        

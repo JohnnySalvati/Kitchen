@@ -1,5 +1,4 @@
 class SourceDTO():
-
     def __init__(self,
                 step_id=None,
                 ingredient=None,
@@ -18,21 +17,25 @@ class SourceDTO():
     @classmethod
     def from_model(cls, source_model):
         """Converts a Source model to a DTO"""
-        from dto.recipe_dto import RecipeDTO
-        from dto.unit_dto import UnitDTO
+        from services.recipe_service import RecipeService
+        from services.unit_service import UnitService
 
-        return SourceDTO(source_model.step_id,
-                        RecipeDTO.from_model(source_model.ingredient),
-                        UnitDTO.from_model(source_model.unit),
-                        source_model.quantity, 
-                        source_model.id)
+        recipe_service = RecipeService()
+        unit_service = UnitService()
+        return SourceDTO(
+                source_model.step_id,
+                recipe_service.get_ingredient(source_model.ingredient_id),
+                unit_service.get_by_id(source_model.unit_id),
+                source_model.quantity, 
+                source_model.id)
 
     def to_model(self):
         """Converts this DTO to a Source Model ready to persist"""
         from models.source_model import Source
 
-        return Source(step_id = self.step_id,
-                                ingredient = self.ingredient.to_model(),
-                                unit = self.unit.to_model(),
-                                quantity = self.quantity,
-                                id = self.id)
+        return Source(
+            step_id = self.step_id,
+            ingredient_id = self.ingredient.id,
+            unit_id = self.unit.id,
+            quantity = self.quantity,
+            id = self.id)

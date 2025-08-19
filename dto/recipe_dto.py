@@ -6,23 +6,24 @@ class RecipeDTO:
         self.steps = steps if steps else []
 
     @classmethod
-    def from_model(cls, recipe_model):
+    def from_model(cls, recipe_model, steps = []):
         """Converts a Recipe model to a DTO"""
         from dto.step_dto import StepDTO
+        from services.step_service import StepService
 
+        step_service = StepService()
         return RecipeDTO(
                         recipe_model.name,
                         recipe_model.price,
-                        [StepDTO.from_model(step) for step in recipe_model.steps],
+                        [step_service.get_by_id(step.id) for step in steps],
                         recipe_model.id)
 
     def to_model(self):
         """Converts this DTO to a Recipe Model ready to persist"""
         from models.recipe_model import Recipe
-
+        
         return Recipe(
                     name = self.name,
                     price = self.price,
-                    steps = [step.to_model() for step in self.steps],
                     id = self.id)
         

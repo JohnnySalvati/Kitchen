@@ -16,7 +16,7 @@ class UnitService:
             unit.delete()
 
     def save(self, unitDTO):
-        unit = UnitDTO.to_model(unitDTO, Unit)
+        unit = UnitDTO.to_model(unitDTO)
         return unit.save()
 
    

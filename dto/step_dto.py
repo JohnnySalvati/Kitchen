@@ -20,20 +20,25 @@ class StepDTO:
         self.resultQuantity = resultQuantity
 
     @classmethod
-    def from_model(cls, step_model):
+    def from_model(cls, step_model, sources=[]):
         """Converts a Step model to a DTO"""
-        from dto.source_dto import SourceDTO
-        from dto.recipe_dto import RecipeDTO
-        from dto.unit_dto import UnitDTO
-        from dto.action_dto import ActionDTO
-
-        return StepDTO(step_model.recipe_id,
-                        [SourceDTO.from_model(source) for source in step_model.sources],
-                        ActionDTO.from_model(step_model.action),
-                        RecipeDTO.from_model(step_model.resultIngredient),
-                        UnitDTO.from_model(step_model.resultUnit),
-                        step_model.resultQuantity,
-                        step_model.id)
+        from services.source_service import SourceService
+        from services.action_service import ActionService
+        from services.recipe_service import RecipeService
+        from services.unit_service import UnitService
+        
+        source_service = SourceService()
+        action_service = ActionService()
+        recipe_service = RecipeService()
+        unit_service = UnitService()
+        return StepDTO( 
+                step_model.recipe_id,
+                [source_service.get_by_id(source.id) for source in sources],
+                action_service.get_by_id(step_model.action_id),
+                recipe_service.get_ingredient(step_model.resultIngredient_id),
+                unit_service.get_by_id(step_model.resultUnit_id),
+                step_model.resultQuantity,
+                step_model.id)
 
     def to_model(self):
         """Converts this DTO to a Step Model ready to persist"""
@@ -41,9 +46,8 @@ class StepDTO:
 
         return Step(
             recipe_id = self.recipe_id,
-            sources = [source.to_model() for source in self.sources],
-            action = self.action.to_model(),
-            resultIngredient = self.resultIngredient.to_model(),
-            resultUnit = self.resultUnit.to_model(),
+            action_id = self.action.id,
+            resultIngredient_id = self.resultIngredient.id,
+            resultUnit_id = self.resultUnit.id,
             resultQuantity = self.resultQuantity,
             id = self.id)

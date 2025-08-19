@@ -9,8 +9,6 @@ from services.source_service import SourceService
 from services.step_service import StepService
 from ui.views.widgets.seeker import Seeker
 from ui.views.widgets.entry_validators import *
-from dto.action_dto import ActionDTO
-from dto.unit_dto import UnitDTO
 from dto.recipe_dto import RecipeDTO
 from dto.source_dto import SourceDTO
 from dto.step_dto import StepDTO
@@ -184,7 +182,6 @@ class RecipeView(tk.Frame):
     
     def update_result_unit_values(self, event=None):
         self.result_unit_combobox['values'] = self.load_unit_values()
-
         
     def load_ingredient_values(self):
         # descarto la posibilidad de tomar como ingrediente el que se esta definiendo
@@ -219,7 +216,6 @@ class RecipeView(tk.Frame):
             messagebox.showerror("Error", str(e))
             return []
 
-
     def load_recipe_list(self):
         recipes = self.recipe_service.get_ingredient_all()
         items = [f"{recipe.id}: {recipe.name}" for recipe in recipes]
@@ -228,9 +224,9 @@ class RecipeView(tk.Frame):
 
     def load_step_list(self):
         items = [
-            f"{step.id}: "
-            f"{(step.resultIngredient.name or '[Sin ingrediente]') if step.resultIngredient else '[Sin ingrediente]'}: "
-            f"{(step.action.name or '[Sin acción]') if step.action else '[Sin acción]'}"
+            f"{step.id}: " 
+            f"{step.resultIngredient.name}: "
+            f"{step.action.name}"
             for step in self.selected_recipe.steps
         ]
         items.append("+ Nuevo...")
@@ -246,6 +242,9 @@ class RecipeView(tk.Frame):
         self.name_var.set('')
         self.price_var.set(float())
         self.load_recipe_list()
+        self.recipe_listbox.focus_set()
+        self.recipe_listbox.event_generate("<ButtonRelease-1>")
+        self.show_recipe_environment()
         
     def save_step(self):
         try:
@@ -256,7 +255,13 @@ class RecipeView(tk.Frame):
                 messagebox.showerror("Error", str(e))
         except Exception:
             messagebox.showwarning("Debes llenar todos los datos antes de guardar el paso")
+        self.selected_recipe = self.recipe_service.get_by_id(self.selected_recipe.id)
+        if not self.recipe_service.is_complete(self.selected_recipe):
+            self.price_var.set(float())
+            self.save_recipe()
         self.load_step_list()
+        self.step_listbox.focus_set()
+        self.step_listbox.event_generate("<ButtonRelease-1>")
         self.show_step_environment()
         
     def delete_recipe(self):
@@ -289,6 +294,9 @@ class RecipeView(tk.Frame):
                 self.load_step_list()
                 self.show_recipe_environment()
                 self.on_select_recipe(None)
+                if not self.recipe_service.is_complete(self.selected_recipe):
+                    self.price_var.set(float())
+                    self.save_recipe()
 
     def on_select_recipe(self, event):
         index = self.recipe_listbox.curselection()[0]
@@ -324,12 +332,21 @@ class RecipeView(tk.Frame):
         self.comboboxes = []
         self.selected_step = step
         self.show_sources()
-        if step.action:
-            self.action_combobox.set(f"{step.action.id or ''}: {step.action.name or ''}")
-        if step.resultIngredient:
-            self.result_ingredient_combobox.set(f"{step.resultIngredient.id or ''}: {step.resultIngredient.name or ''}")
-        if step.resultUnit:
-            self.result_unit_combobox.set(f"{step.resultUnit.id or ''}: {step.resultUnit.name or ''}")
+        self.set_step_comboboxes(step)
+
+    def set_step_comboboxes(self, step):
+        if step.action.id:
+            self.action_combobox.set(f"{step.action.id}: {step.action.name}")
+        else:
+            self.action_combobox.set('')
+        if step.resultIngredient.id:
+            self.result_ingredient_combobox.set(f"{step.resultIngredient.id}: {step.resultIngredient.name}")
+        else:
+            self.result_ingredient_combobox.set('')
+        if step.resultUnit.id:
+            self.result_unit_combobox.set(f"{step.resultUnit.id}: {step.resultUnit.name}")
+        else:
+            self.result_unit_combobox.set('')
         if step.resultQuantity:
             self.result_quantity_var.set(step.resultQuantity)
         self.show_step_environment() # modifico el entorno para step
@@ -365,9 +382,9 @@ class RecipeView(tk.Frame):
 
     def set_complete(self):
         try:
-            if self.recipe_service.is_complete(self.selected_recipe.id):
+            if self.recipe_service.is_complete(self.selected_recipe):
                 self.is_complete.grid(row=0, column=4, padx=20)
-                if self.recipe_service.has_ingredients(self.selected_recipe.id):
+                if self.recipe_service.has_ingredients(self.selected_recipe):
                     self.entry_price.config(state="readonly")
                 else:
                     self.entry_price.config(state="normal")
@@ -410,21 +427,25 @@ class RecipeView(tk.Frame):
                                     "quantity": quantity,
                                     "del_button": del_source_button
                                     })
-            if source.ingredient:
-                ingredient_combobox.set(f"{source.ingredient.id or ''}: {source.ingredient.name or ''}")
-            if source.unit:
-                unit_combobox.set(f"{source.unit.id or ''}: {source.unit.name or ''}")
+            if source.ingredient.id:
+                ingredient_combobox.set(f"{source.ingredient.id}: {source.ingredient.name}")
+            else:
+                ingredient_combobox.set('')
+            if source.unit.id:
+                unit_combobox.set(f"{source.unit.id}: {source.unit.name}")
+            else:
+                unit_combobox.set('')
             quantity.insert(0, source.quantity)
         add_source_button = tk.Button(self.source_frame, text="+", command=self.add_blank_source)
         add_source_button.grid(row=len(step.sources)+1, column=0, padx=(10,0), pady=5)
 
     def add_blank_source(self):
-        #self.flush_step_values()
+        self.flush_step_values()
         self.selected_step.sources.append(SourceDTO(self.selected_step.id))
         self.show_sources()
 
     def del_source(self, row):
-        #self.flush_step_values()
+        self.flush_step_values()
         del self.selected_step.sources[row]
         del self.comboboxes[row]
         self.show_sources()
@@ -446,37 +467,55 @@ class RecipeView(tk.Frame):
         self.selected_recipe.price = float(self.entry_price.get())
         
     def set_ingredient(self, row):
-        id = int(self.comboboxes[row]["ingredient"].get().split(":")[0])
-        self.selected_step.sources[row].ingredient = self.recipe_service.get_ingredient(id)
+        try:
+            id = int(self.comboboxes[row]["ingredient"].get().split(":")[0])
+            self.selected_step.sources[row].ingredient = self.recipe_service.get_ingredient(id)
+        except:
+            pass
 
     def set_unit(self, row):
-        id = int(self.comboboxes[row]["unit"].get().split(":")[0])
         try:
-            self.selected_step.sources[row].unit = self.unit_service.get_by_id(id)
-        except Exception as e:
-            messagebox.showerror("Error", str(e))
+            id = int(self.comboboxes[row]["unit"].get().split(":")[0])
+            try:
+                self.selected_step.sources[row].unit = self.unit_service.get_by_id(id)
+            except Exception as e:
+                messagebox.showerror("Error", str(e))
+        except:
+            pass
 
     def set_quantity(self, row):
         q = float(self.comboboxes[row]["quantity"].get())
         self.selected_step.sources[row].quantity = q
 
     def set_action(self):
-        id = int(self.action_combobox.get().split(":")[0])
         try:
-            self.selected_step.action = self.action_service.get_by_id(id)
-        except Exception as e:
-            messagebox.showerror("Error", str(e))
+            id = int(self.action_combobox.get().split(":")[0])
+            try:
+                self.selected_step.action = self.action_service.get_by_id(id)
+            except Exception as e:
+                messagebox.showerror("Error", str(e))
+        except:
+            pass
 
     def set_result_ingredient(self):
-        id = int(self.result_ingredient_combobox.get().split(":")[0])
-        self.selected_step.resultIngredient = self.recipe_service.get_ingredient(id)
+        try:
+            id = int(self.result_ingredient_combobox.get().split(":")[0])
+            try:
+                self.selected_step.resultIngredient = self.recipe_service.get_ingredient(id)
+            except Exception as e:
+                messagebox.showerror("Error", str(e))
+        except:
+            pass
 
     def set_result_unit(self):
-        id = int(self.result_unit_combobox.get().split(":")[0])
         try:
-            self.selected_step.resultUnit = self.unit_service.get_by_id(id)
-        except Exception as e:
-            messagebox.showerror("Error", str(e))
+            id = int(self.result_unit_combobox.get().split(":")[0])
+            try:
+                self.selected_step.resultUnit = self.unit_service.get_by_id(id)
+            except Exception as e:
+                messagebox.showerror("Error", str(e))
+        except:
+            pass
     
     def set_result_quantity(self):
         q = float(self.result_quantity.get())
@@ -484,4 +523,3 @@ class RecipeView(tk.Frame):
     
     def close(self):
         self.destroy()
-

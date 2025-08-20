@@ -2,43 +2,63 @@
 import winsound
 import re
 import tkinter as tk
+from tkinter import ttk 
 
 class Seeker():
-    def __init__(self, listbox, label ):
+    def __init__(self, box, label ):
         self.buffer = ""
-        self.listbox = listbox
+        self.box = box
         self.label = label
+        if isinstance(box, tk.Listbox):
+            self.show = self.show_listbox
+            self.get = lambda : self.box.get(0, tk.END)
+        if isinstance(box, ttk.Combobox):
+            self.show = self.show_combobox
+            self.get = lambda : self.box["values"]
 
     def search(self, event):
         if event.keysym in ("Up", "Down", "Left", "Right", "Prior", "Next", "Home", "End"):
+            self.box.after(1500, self.clear_buffer)
             return
+        sound = None
         if event.char.isprintable():
             self.buffer += event.char
-            lista = self.listbox.get(0, tk.END)
+            elements_list = self.get()
             # build the pattern by inserting .* between characters
             pattern = '.*'.join(map(re.escape, self.buffer))  # e.g. "rcpv" → r.*c.*p.*v
             regex = re.compile(pattern, re.IGNORECASE)   # case insensitive
-            for index, item in enumerate(lista):
+            for index, item in enumerate(elements_list):
                 if re.search(regex, item):
                     self.show(index)
+                    self.box.after(2000, self.clear_buffer)
                     return "break"
             self.buffer = self.buffer[:-1]
-            winsound.PlaySound('tap.wav', winsound.SND_FILENAME)
+            sound = 'tap.wav'
         elif event.keysym == "BackSpace":
             self.buffer = self.buffer[:-1]
         elif event.keysym == "Escape":
-            winsound.PlaySound('pop.wav', winsound.SND_FILENAME)
+            sound = 'pop.wav'
             self.buffer = ""
         self.label.config(text=self.buffer)
+        if sound:
+            winsound.PlaySound(sound, winsound.SND_FILENAME)
+        self.box.after(1500, self.clear_buffer)
 
-    def clear(self):
-        self.buffer = ""
-        self.show()
+    def clear_buffer(self):
+        if self.buffer != "":
+            self.buffer = ""
+            self.show()
+            winsound.PlaySound('pop.wav', winsound.SND_FILENAME)
         
-    def show(self, index=None):
+    def show_listbox(self, index=None):
         if index is not None:
-            self.listbox.selection_clear(0, tk.END)
-            self.listbox.selection_set(index)
-            self.listbox.activate(index)
-            self.listbox.see(index)
+            self.box.selection_clear(0, tk.END)
+            self.box.selection_set(index)
+            self.box.activate(index)
+            self.box.see(index)
+        self.label.config(text=self.buffer)
+
+    def show_combobox(self, index=None):
+        if index is not None:
+            self.box.current(index)
         self.label.config(text=self.buffer)

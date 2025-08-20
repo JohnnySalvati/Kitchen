@@ -8,6 +8,7 @@ from services.recipe_service import RecipeService
 from services.source_service import SourceService
 from services.step_service import StepService
 from ui.views.widgets.seeker import Seeker
+from ui.views.widgets.smart_listbox import SmartListbox
 from ui.views.widgets.entry_validators import *
 from dto.recipe_dto import RecipeDTO
 from dto.source_dto import SourceDTO
@@ -23,6 +24,7 @@ class RecipeView(tk.Frame):
         self.step_service = StepService()
         self.selected_recipe = RecipeDTO()
         self.selected_step = StepDTO()
+        self.search_label_keys = tk.Label()
         
         # frame definition
         self.grid_columnconfigure(0, weight=2)
@@ -47,7 +49,7 @@ class RecipeView(tk.Frame):
         recipe_frame.grid(row=1, column=0, sticky="nsew")
         self.recipe_list = tk.Variable(value=[]) # variable tk que almacene lista recetas para ser mostrada en el listbox
         recipe_scrollbar = ttk.Scrollbar(recipe_frame, orient=tk.VERTICAL)
-        self.recipe_listbox = tk.Listbox(recipe_frame,
+        self.recipe_listbox = SmartListbox(recipe_frame,
                                             exportselection=False,
                                             listvariable=self.recipe_list,
                                             yscrollcommand=recipe_scrollbar.set,
@@ -75,10 +77,10 @@ class RecipeView(tk.Frame):
         self.delete_step_button.pack(expand=True)
             # frame para la busqueda
         search_label = tk.Label(search_frame, text="Busqueda:", anchor="e", padx=5)
-        search_label_keys = tk.Label(search_frame, width=20, anchor="w")
+        self.search_label_keys = tk.Label(search_frame, width=20, anchor="w")
         search_label.pack(side="left")
-        search_label_keys.pack(side="left")
-        self.recipe_search = Seeker(self.recipe_listbox, search_label_keys) # buscador para lista de recetas
+        self.search_label_keys.pack(side="left")
+        self.recipe_search = Seeker(self.recipe_listbox, self.search_label_keys) # buscador para lista de recetas
         self.recipe_listbox.bind("<Key>", self.recipe_search.search)
         # oculto los command buttons para step
         self.save_step_button.forget()
@@ -89,7 +91,7 @@ class RecipeView(tk.Frame):
         step_frame.grid(row=2, column=0, columnspan=2, sticky="nsew")
         self.step_list_var = tk.Variable(value=[])    # variable tk que almacene lista steps para ser mostrada en el step
         step_scrollbar = ttk.Scrollbar(step_frame, orient=tk.VERTICAL)
-        self.step_listbox = tk.Listbox(step_frame,
+        self.step_listbox = SmartListbox(step_frame,
                                         exportselection=False,
                                         listvariable=self.step_list_var,
                                         yscrollcommand=step_scrollbar.set,
@@ -98,7 +100,7 @@ class RecipeView(tk.Frame):
         step_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         self.step_listbox.bind("<ButtonRelease-1>", self.on_select_step)
         self.step_listbox.bind("<Return>", self.on_select_step)
-        self.step_search = Seeker(self.step_listbox, search_label_keys)        # buscador para lista de pasos
+        self.step_search = Seeker(self.step_listbox, self.search_label_keys)        # buscador para lista de pasos
         self.step_listbox.bind("<Key>", self.step_search.search)
         self.step_listbox.pack(expand=True, fill=tk.BOTH)
 
@@ -141,10 +143,14 @@ class RecipeView(tk.Frame):
                 # actions frame
         action_frame = tk.Frame(self.step_data_frame, bd=2, relief="ridge")
         action_frame.grid(row=1, column=1, padx=20, pady=10)
+
         label = tk.Label(action_frame, text="Accion:")
         label.grid(row=0, column=0, sticky="e",  padx=(40, 5), pady=5)
+
         self.action_combobox = ttk.Combobox(action_frame, values=self.load_action_values(), state="readonly")
         self.action_combobox.bind("<Button-1>", self.update_action_values) # agrego llamadas para actualizar valores de los combobox cuando reciben el foco
+        self.action_search = Seeker(self.action_combobox, self.search_label_keys)
+        self.action_combobox.bind("<Key>", self.action_search.search)
         self.action_combobox.grid(row=0, column=1, sticky="w", padx=(5, 40), pady=5)
                 # results frame
         result_frame = tk.LabelFrame(self.step_data_frame, text="Resultante", bd=2, relief="ridge")
@@ -155,12 +161,19 @@ class RecipeView(tk.Frame):
         label.grid(row=1, column=0, sticky="e", padx=(40, 5), pady=5)
         label = tk.Label(result_frame, text="Cantidad:")
         label.grid(row=2, column=0, sticky="e", padx=(40, 5), pady=5)
+
         self.result_ingredient_combobox = ttk.Combobox(result_frame, values=self.load_result_ingredient_values(), state="readonly")
-        self.result_ingredient_combobox.grid(row=0, column=1, sticky="w", padx=(5, 40), pady=5)
         self.result_ingredient_combobox.bind("<Button-1>", self.update_result_ingredient_values) # agrego llamada para actualizar valores cuando recibe el foco
+        self.result_ingredient_search = Seeker(self.result_ingredient_combobox, self.search_label_keys)
+        self.result_ingredient_combobox.bind("<Key>", self.result_ingredient_search.search)
+        self.result_ingredient_combobox.grid(row=0, column=1, sticky="w", padx=(5, 40), pady=5)
+
         self.result_unit_combobox = ttk.Combobox(result_frame, values=self.load_unit_values(), state="readonly")
         self.result_unit_combobox.bind("<Button-1>", self.update_result_unit_values) # agrego llamada para actualizar valores cuando recibe el foco
+        self.result_unit_search = Seeker(self.result_unit_combobox, self.search_label_keys)
+        self.result_unit_combobox.bind("<Key>", self.result_unit_search.search)
         self.result_unit_combobox.grid(row=1, column=1, sticky="w", padx=(5, 40), pady=5)
+
         self.result_quantity_var = tk.DoubleVar()
         self.result_quantity = ttk.Entry(result_frame, textvariable=self.result_quantity_var, validate="key", validatecommand=vcmd, width=5)        # agrego validaciones a los quantity entries
         self.result_quantity.grid(row=2, column=1, sticky="w", padx=(5, 40), pady=5)
@@ -301,7 +314,6 @@ class RecipeView(tk.Frame):
     def on_select_recipe(self, event):
         index = self.recipe_listbox.curselection()[0]
         data = self.recipe_listbox.get(index)
-        self.step_search.clear()
         self.selected_step = StepDTO()
         if data == "+ Nuevo...":
             self.selected_recipe = RecipeDTO()
@@ -318,7 +330,6 @@ class RecipeView(tk.Frame):
             messagebox.showinfo("Antes de agregar pasos debes GUARDAR la receta")
             return
         self.clear_step_fields() 
-        self.recipe_search.clear()
         index = self.step_listbox.curselection()[0]
         data = self.step_listbox.get(index)
         if data == "+ Nuevo...":
@@ -410,11 +421,16 @@ class RecipeView(tk.Frame):
         label.grid(row=0, column=3, padx=5, pady=5)
         for row, source in enumerate(step.sources):
             ingredient_combobox = ttk.Combobox(self.source_frame, values=self.load_ingredient_values(), state="readonly")
-            ingredient_combobox.grid(row=row + 1, column=1, padx=(0,5), pady=5)
             ingredient_combobox.bind("<Button-1>", lambda event, r=row: self.update_ingredient_values(event, r))  # agrego llamadas para actualizar valores de los combobox cuando reciben el foco
+            ingredient_search = Seeker(ingredient_combobox, self.search_label_keys)
+            ingredient_combobox.bind("<Key>", ingredient_search.search)
+            ingredient_combobox.grid(row=row + 1, column=1, padx=(0,5), pady=5)
+
             unit_combobox = ttk.Combobox(self.source_frame, values=self.load_unit_values(), state="readonly")
-            unit_combobox.grid(row=row + 1, column=2, padx=5, pady=5)
             unit_combobox.bind("<Button-1>", lambda event, r=row: self.update_unit_values(event, r)) # agrego llamadas para actualizar valores de los combobox cuando reciben el foco
+            unit_search = Seeker(unit_combobox, self.search_label_keys)
+            unit_combobox.bind("<Key>", unit_search.search)
+            unit_combobox.grid(row=row + 1, column=2, padx=5, pady=5)
 
             # agrego validaciones a los quantity entries
             vcmd = (self.register(only_float), "%P")

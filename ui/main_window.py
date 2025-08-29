@@ -2,6 +2,7 @@
 import tkinter as tk
 from ui.views.elements_view import *
 from ui.views.recipes_view import *
+from ui.views.unit_converter_view import *
 from services.action_service import ActionService
 from services.unit_service import UnitService
 from dto.unit_dto import UnitDTO
@@ -61,6 +62,12 @@ class KitchenApp():
             self.elements_view.destroy() 
         self.elements_view = ElementView(self.root, service, dto, field_definition, title)
         self.elements_view.pack(side=tk.RIGHT, expand=True, fill=tk.BOTH)  
+
+    def unit_converter_crud(self):
+        if hasattr(self, 'unit_converter_view') and self.unit_converter_view.winfo_exists():
+            self.unit_converter_view.destroy()
+        self.unit_converter_view = UnitConverter(self.root)
+        self.unit_converter_view.pack(side=tk.RIGHT, expand=True, fill=tk.BOTH)  
 
     def recipe_crud(self):
         if hasattr(self, 'recipe_view') and self.recipe_view.winfo_exists():

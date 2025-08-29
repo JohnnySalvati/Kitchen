@@ -47,17 +47,18 @@ class RecipeView(tk.Frame):
         # frame para las recetas
         recipe_frame = tk.Frame(self, bd=4, relief="groove")
         recipe_frame.grid(row=1, column=0, sticky="nsew")
-        self.recipe_list = tk.Variable(value=[]) # variable tk que almacene lista recetas para ser mostrada en el listbox
+        self.recipe_list_var = tk.Variable(value=[]) # variable tk que almacene lista recetas para ser mostrada en el listbox
         recipe_scrollbar = ttk.Scrollbar(recipe_frame, orient=tk.VERTICAL)
         self.recipe_listbox = SmartListbox(recipe_frame,
                                             exportselection=False,
-                                            listvariable=self.recipe_list,
+                                            listvariable=self.recipe_list_var,
                                             yscrollcommand=recipe_scrollbar.set,
                                             activestyle=tk.NONE)
         recipe_scrollbar.config(command=self.recipe_listbox.yview)
         recipe_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         self.recipe_listbox.bind("<ButtonRelease-1>", self.on_select_recipe)
         self.recipe_listbox.bind("<Return>", self.on_select_recipe)
+        self.recipe_listbox.bind("<Enter>", self.load_recipe_list)
         self.recipe_listbox.pack(expand=True, fill=tk.BOTH)
         
         # frame para los comandos
@@ -100,6 +101,7 @@ class RecipeView(tk.Frame):
         step_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         self.step_listbox.bind("<ButtonRelease-1>", self.on_select_step)
         self.step_listbox.bind("<Return>", self.on_select_step)
+        self.step_listbox.bind("<Enter>", self.load_step_list)
         self.step_search = Seeker(self.step_listbox, self.search_label_keys)        # buscador para lista de pasos
         self.step_listbox.bind("<Key>", self.step_search.search)
         self.step_listbox.pack(expand=True, fill=tk.BOTH)
@@ -179,7 +181,7 @@ class RecipeView(tk.Frame):
         self.result_quantity.grid(row=2, column=1, sticky="w", padx=(5, 40), pady=5)
 
         self.load_recipe_list()
-        self.recipe_listbox.focus_set()
+        self.recipe_listbox.selection_set(0)
 
     def update_ingredient_values(self, event, row):
         self.comboboxes[row]["ingredient"]["values"] = self.load_ingredient_values()
@@ -229,19 +231,18 @@ class RecipeView(tk.Frame):
             messagebox.showerror("Error", str(e))
             return []
 
-    def load_recipe_list(self):
+    def load_recipe_list(self, event=None):
         recipes = self.recipe_service.get_ingredient_all()
         items = [f"{recipe.id}: {recipe.name}" for recipe in recipes]
         items.append("+ Nuevo...")
-        self.recipe_list.set(items)
+        self.recipe_list_var.set(items)
 
-    def load_step_list(self):
+    def load_step_list(self, event=None):
         items = [
             f"{step.id}: " 
             f"{step.resultIngredient.name}: "
             f"{step.action.name}"
-            for step in self.selected_recipe.steps
-        ]
+            for step in self.selected_recipe.steps]
         items.append("+ Nuevo...")
         self.step_list_var.set(items)
 
@@ -421,13 +422,13 @@ class RecipeView(tk.Frame):
         label.grid(row=0, column=3, padx=5, pady=5)
         for row, source in enumerate(step.sources):
             ingredient_combobox = ttk.Combobox(self.source_frame, values=self.load_ingredient_values(), state="readonly")
-            ingredient_combobox.bind("<Button-1>", lambda event, r=row: self.update_ingredient_values(event, r))  # agrego llamadas para actualizar valores de los combobox cuando reciben el foco
+            ingredient_combobox.bind("<Enter>", lambda event, r=row: self.update_ingredient_values(event, r))  # agrego llamadas para actualizar valores de los combobox cuando reciben el foco
             ingredient_search = Seeker(ingredient_combobox, self.search_label_keys)
             ingredient_combobox.bind("<Key>", ingredient_search.search)
             ingredient_combobox.grid(row=row + 1, column=1, padx=(0,5), pady=5)
 
             unit_combobox = ttk.Combobox(self.source_frame, values=self.load_unit_values(), state="readonly")
-            unit_combobox.bind("<Button-1>", lambda event, r=row: self.update_unit_values(event, r)) # agrego llamadas para actualizar valores de los combobox cuando reciben el foco
+            unit_combobox.bind("<Enter>", lambda event, r=row: self.update_unit_values(event, r)) # agrego llamadas para actualizar valores de los combobox cuando reciben el foco
             unit_search = Seeker(unit_combobox, self.search_label_keys)
             unit_combobox.bind("<Key>", unit_search.search)
             unit_combobox.grid(row=row + 1, column=2, padx=5, pady=5)

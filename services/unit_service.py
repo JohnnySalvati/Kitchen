@@ -3,8 +3,11 @@ from dto.unit_dto import UnitDTO
 
 class UnitService:
     def get_by_id(self, id):
-        unit = Unit.get_one("id", id)
-        return UnitDTO.from_model(unit)
+        if id:
+            unit = Unit.get_one("id", id)
+            return UnitDTO.from_model(unit)
+        else:
+            return UnitDTO()
     
     def get_all(self):
         units = Unit.get_all()

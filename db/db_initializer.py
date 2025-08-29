@@ -45,6 +45,15 @@ def create_database():
                     FOREIGN KEY(ingredient_id) REFERENCES recipe(id),
                     FOREIGN KEY(unit_id) REFERENCES unit(id)
         """,
+        "unit_converter": """
+                    id INTEGER PRIMARY KEY,
+                    source_unit_id INTEGER,
+                    quantity REAL,
+                    target_unit_id INTEGER,
+                    UNIQUE(source_unid_id, target_unit_id),
+                    FOREIGN KEY(source_unit_id) REFERENCES unit(id) ON DELETE CASCADE,
+                    FOREIGN KEY(target_unit_id) REFERENCES unit(id) ON DELETE CASCADE
+"""
     }
 
     for name, definition in tables.items():

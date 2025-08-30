@@ -1,8 +1,9 @@
 from models.recipe_model import Recipe
-from models.step_model import Step
 from dto.recipe_dto import RecipeDTO
+from collections import defaultdict
 from services.step_service import StepService
 step_service = StepService()
+
 class RecipeService:
 
     def save(self, recipeDTO):
@@ -20,7 +21,7 @@ class RecipeService:
 
     def get_by_id(self, id):
         recipe = Recipe.get_one("id", id)
-        steps = Step.get_all("recipe_id", id)
+        steps = step_service.get_all(id)
         recipeDTO = RecipeDTO.from_model(recipe, steps)
         return recipeDTO
     
@@ -28,7 +29,7 @@ class RecipeService:
         recipesDTO = []
         recipes = Recipe.get_all()
         for recipe in recipes:
-            steps = Step.get_all("recipe_id", recipe.id)
+            steps = step_service.get_all(recipe.id)
             recipesDTO.append(RecipeDTO.from_model(recipe, steps))
         return recipesDTO
     
@@ -45,11 +46,8 @@ class RecipeService:
     
     def is_complete(self, recipe_object):
         """Determines if Recipe or RecipeDTO is complete, to be used like ingredient"""
-        if isinstance(recipe_object,RecipeDTO):
-            recipeDTO = recipe_object
-        elif isinstance(recipe_object, Recipe):
-            recipeDTO = RecipeDTO.from_model(recipe_object)
-        if not recipeDTO.name or not recipeDTO.steps:
+        recipeDTO = self.get_by_id(recipe_object.id)
+        if not recipeDTO.steps:
             return False
         if recipeDTO.steps[-1].resultIngredient.id == recipeDTO.id:
             return True
@@ -57,10 +55,7 @@ class RecipeService:
     
     def has_ingredients(self, recipe_object):
         """Determines if at least one step has ingredients"""
-        if isinstance(recipe_object,RecipeDTO):
-            recipeDTO = recipe_object
-        elif isinstance(recipe_object, Recipe):
-            recipeDTO = RecipeDTO.from_model(recipe_object)
+        recipeDTO = self.get_by_id(recipe_object.id)
         for step in recipeDTO.steps:
             if step.sources:
                 return True
@@ -73,3 +68,24 @@ class RecipeService:
         else:
             raise ValueError(f"No existe receta con ID {id}")
     
+    def get_all_completed(self):
+        """Return all completed ingredients to be used for calculating their basic ingredients. * * * Without STEP depth  * * * """
+        return [recipe for recipe in self.get_ingredient_all() if self.is_complete(recipe) and not self.is_basic(recipe)]
+    
+    def is_basic(self, recipe_object):
+        """Determines if the ingredient is basic."""
+        return not self.has_ingredients(recipe_object) and self.is_complete(recipe_object)
+    
+    def basic_ingredients(self, recipe_object):
+        """Returns the quantities of all basic ingredients that make up a recipe"""
+        basic_ingredients = defaultdict(lambda: defaultdict(float))
+        for step in recipe_object.steps:
+            for source in step.sources:
+                if self.is_basic(source.ingredient):
+                    basic_ingredients[source.ingredient.id][source.unit.id] += source.quantity
+                else:
+                    basic_dictionary = self.basic_ingredients(source.ingredient)
+                    for ingredient_id, unit_quantity in basic_dictionary.items():
+                        for unit_id, quantity in unit_quantity.items():
+                            basic_ingredients[ingredient_id][unit_id] += quantity
+        return {ing: dict(units) for ing, units in basic_ingredients.items()}

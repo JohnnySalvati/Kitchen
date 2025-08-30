@@ -24,7 +24,7 @@ class SourceDTO():
         unit_service = UnitService()
         return SourceDTO(
                 source_model.step_id,
-                recipe_service.get_ingredient(source_model.ingredient_id),
+                recipe_service.get_by_id(source_model.ingredient_id),
                 unit_service.get_by_id(source_model.unit_id),
                 source_model.quantity, 
                 source_model.id)

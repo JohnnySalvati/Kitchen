@@ -1,11 +1,12 @@
 from models.step_model import Step
-from models.source_model import Source
 from dto.step_dto import StepDTO
-
 class StepService:
     def get_by_id(self, id):
+        from services.source_service import SourceService
+
+        source_service = SourceService()
         step = Step.get_one("id", id)
-        sources = Source.get_all("step_id", id)
+        sources = source_service.get_all(id)
         return StepDTO.from_model(step, sources)
     
     def get_all(self, recipe_id):

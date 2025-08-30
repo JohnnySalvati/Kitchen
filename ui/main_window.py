@@ -3,6 +3,7 @@ import tkinter as tk
 from ui.views.elements_view import *
 from ui.views.recipes_view import *
 from ui.views.unit_converter_view import *
+from ui.views.calculator_view import *
 from services.action_service import ActionService
 from services.unit_service import UnitService
 from dto.unit_dto import UnitDTO
@@ -75,6 +76,12 @@ class KitchenApp():
         self.recipe_view = RecipeView(self.root)
         self.recipe_view.pack(side=tk.RIGHT, expand=True, fill=tk.BOTH)  
 
-    
+    def basic_ingredients(self):
+        if hasattr(self, 'calculator_view') and self.calculator_view.winfo_exists():
+            self.calculator_view.destroy()
+        self.calculator_view = CalculatorView(self.root)
+        self.calculator_view.pack(side=tk.RIGHT, expand=True, fill=tk.BOTH)  
+
+
         
     

@@ -1,5 +1,13 @@
 # this class build a seeker object for event management listboxes
-import winsound
+try:
+    import winsound
+    def play_sound(filename):
+        winsound.PlaySound(filename, winsound.SND_FILENAME)
+except ImportError:
+    from playsound import playsound
+    def play_sound(filename):
+        playsound(filename, block=False)
+
 import re
 import tkinter as tk
 from tkinter import ttk 
@@ -41,14 +49,14 @@ class Seeker():
             self.buffer = ""
         self.label.config(text=self.buffer)
         if sound:
-            winsound.PlaySound(sound, winsound.SND_FILENAME)
+            play_sound(sound)
         self.box.after(1500, self.clear_buffer)
 
     def clear_buffer(self):
         if self.buffer != "":
             self.buffer = ""
             self.show()
-            winsound.PlaySound('pop.wav', winsound.SND_FILENAME)
+            play_sound('pop.wav')
         
     def show_listbox(self, index=None):
         if index is not None:

@@ -20,7 +20,10 @@ def create_database():
         "recipe": """  
                     id INTEGER PRIMARY KEY,
                     name TEXT unique,
-                    price REAL
+                    price REAL,
+                    unit_id INTEGER,
+                    quantity REAL,
+                    FOREIGN KEY(unit_id) REFERENCES unit(id)
         """,
         "step": """
                    id INTEGER PRIMARY KEY,

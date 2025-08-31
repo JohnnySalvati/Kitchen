@@ -4,9 +4,10 @@ try:
     def play_sound(filename):
         winsound.PlaySound(filename, winsound.SND_FILENAME)
 except ImportError:
-    from playsound import playsound
+#    from playsound import playsound
     def play_sound(filename):
-        playsound(filename, block=False)
+#        playsound(filename, block=False)
+        pass
 
 import re
 import tkinter as tk

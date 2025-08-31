@@ -32,10 +32,10 @@ class CalculatorView(tk.Frame):
         close_button.grid(row=0, column=1, sticky="e")
 
         self.completed_ingredients_list_var = tk.Variable(value=self.load_completed_ingredients())    
-
         scrollbar = ttk.Scrollbar(list_frame, orient=tk.VERTICAL)
         self.ingredients_listbox = SmartListbox(
                                         list_frame,
+                                        font=("Courier New", 10),
                                         exportselection=False,
                                         listvariable=self.completed_ingredients_list_var,
                                         yscrollcommand=scrollbar.set,
@@ -52,10 +52,10 @@ class CalculatorView(tk.Frame):
         self.ingredients_listbox.pack(expand=True, fill=tk.BOTH)
 
         self.basic_ingredients_list_var = tk.Variable(value=[])    
-
         scrollbar = ttk.Scrollbar(list_frame, orient=tk.VERTICAL)
         self.basic_ingredients_listbox = SmartListbox(
                                         list_frame,
+                                        font=("Courier New", 10),
                                         exportselection=False,
                                         listvariable=self.basic_ingredients_list_var,
                                         yscrollcommand=scrollbar.set,
@@ -71,13 +71,12 @@ class CalculatorView(tk.Frame):
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         self.basic_ingredients_listbox.pack(expand=True, fill=tk.BOTH)
 
-
     def load_completed_ingredients(self, event=None):
         try:
             completed_ingredients = self.recipe_service.get_all_completed()
         except Exception as e:
             messagebox.showerror("Error", str(e))
-        return [f"{ing.id}: {ing.name}" for ing in completed_ingredients]
+        return [f"{ing.id:>3}: {ing.name}" for ing in completed_ingredients]
         
     def on_select_unit(self, event):
         try:
@@ -89,9 +88,9 @@ class CalculatorView(tk.Frame):
                 show_list = []
                 for ingredient_id, unit_quantity in basic.items():
                     for unit_id, quantity in unit_quantity.items():
-                        ingredient_name = self.recipe_service.get_ingredient(ingredient_id).name
+                        ingredient = self.recipe_service.get_ingredient(ingredient_id)
                         unit_name = self.unit_service.get_by_id(unit_id).name
-                        show_list.append(f"{quantity} {unit_name} de {ingredient_name}")
+                        show_list.append(f"{quantity:>8,.3f} {f'{unit_name} de {ingredient.name}'.ljust(30)} = {ingredient.price:>10,.2f}")
                 self.basic_ingredients_list_var.set(show_list)
             except Exception as e:
                 messagebox.showerror("Error", str(e))

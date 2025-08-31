@@ -89,3 +89,5 @@ class RecipeService:
                         for unit_id, quantity in unit_quantity.items():
                             basic_ingredients[ingredient_id][unit_id] += quantity
         return {ing: dict(units) for ing, units in basic_ingredients.items()}
+    
+    

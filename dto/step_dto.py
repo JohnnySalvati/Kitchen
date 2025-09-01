@@ -5,7 +5,7 @@ class StepDTO:
                     action=None,
                     resultIngredient=None,
                     resultUnit=None,
-                    resultQuantity=None,
+                    resultQuantity=float(0),
                     id=None):
         from dto.action_dto import ActionDTO
         from dto.recipe_dto import RecipeDTO

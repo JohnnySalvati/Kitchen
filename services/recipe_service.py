@@ -90,4 +90,17 @@ class RecipeService:
                             basic_ingredients[ingredient_id][unit_id] += quantity
         return {ing: dict(units) for ing, units in basic_ingredients.items()}
     
+    def get_price(self, ingredient_id, unit_id, quantity):
+        """Returns a price given ingredient id or obj, unit id or obj and quantity"""
+        from services.unit_converter_service import UnitConverterService
+
+        unit_converter_service = UnitConverterService()
+        ingredient = self.get_ingredient(ingredient_id)
+        if ingredient.unit.id == unit_id:
+            final_quantity = quantity
+        else:
+            final_quantity = unit_converter_service.convert(quantity, unit_id, ingredient.unit.id)
+        return ingredient.price / ingredient.quantity * final_quantity
+
+        
     

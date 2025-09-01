@@ -24,7 +24,36 @@ class UnitConverterService:
         unit_converter = UnitConverterDTO.to_model(unit_converterDTO)
         unit_converter.save()
         return 
+    
+    def match(self, source_unit_id, target_unit_id):
+        unit_converters = self.get_all(source_unit_id)
+        for unit_converter in unit_converters:
+            if unit_converter.target_unit.id == target_unit_id:
+                return unit_converter
+        unit_converters = self.get_all(target_unit_id)
+        for unit_converter in unit_converters:
+            if unit_converter.target_unit.id == source_unit_id:
+                return unit_converter
+        return None
+    
+    def convert(self, quantity, source_unit_id, target_unit_id):
+        from services.unit_service import UnitService
 
+        unit_service = UnitService()
+        unit_converter = self.match(source_unit_id, target_unit_id)
+        if unit_converter:
+            if unit_converter.source_unit.id == source_unit_id:
+                return quantity * unit_converter.quantity
+            else:
+                return quantity / unit_converter.quantity
+        else:
+            source_unit = unit_service.get_by_id(source_unit_id)
+            target_unit = unit_service.get_by_id(target_unit_id)
+            raise ConversionNotFoundError(f"No existe una conversion que relacione {source_unit.name} con {target_unit.name}")
+        return quantity
 class DuplicateUnitConverterError(Exception):
     """Se intenta crear un unit_converter duplicado"""
+    pass
+
+class ConversionNotFoundError(Exception):
     pass

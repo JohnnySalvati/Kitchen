@@ -157,18 +157,16 @@ class RecipeView(tk.Frame):
                 # results frame
         result_frame = tk.LabelFrame(self.step_data_frame, text="Resultante", bd=2, relief="ridge")
         result_frame.grid(row=1, column=2, padx=20, pady=10)
-        label = tk.Label(result_frame, text="Ingrediente:")
+        label = tk.Label(result_frame, text="Cantidad:")
         label.grid(row=0, column=0, sticky="e", padx=(40, 5), pady=5)
         label = tk.Label(result_frame, text="Unidad:")
         label.grid(row=1, column=0, sticky="e", padx=(40, 5), pady=5)
-        label = tk.Label(result_frame, text="Cantidad:")
+        label = tk.Label(result_frame, text="Ingrediente:")
         label.grid(row=2, column=0, sticky="e", padx=(40, 5), pady=5)
 
-        self.result_ingredient_combobox = ttk.Combobox(result_frame, values=self.load_result_ingredient_values(), state="readonly")
-        self.result_ingredient_combobox.bind("<Button-1>", self.update_result_ingredient_values) # agrego llamada para actualizar valores cuando recibe el foco
-        self.result_ingredient_search = Seeker(self.result_ingredient_combobox, self.search_label_keys)
-        self.result_ingredient_combobox.bind("<Key>", self.result_ingredient_search.search)
-        self.result_ingredient_combobox.grid(row=0, column=1, sticky="w", padx=(5, 40), pady=5)
+        self.result_quantity_var = tk.DoubleVar()
+        self.result_quantity = ttk.Entry(result_frame, textvariable=self.result_quantity_var, validate="key", validatecommand=vcmd, width=5)        # agrego validaciones a los quantity entries
+        self.result_quantity.grid(row=0, column=1, sticky="w", padx=(5, 40), pady=5)
 
         self.result_unit_combobox = ttk.Combobox(result_frame, values=self.load_unit_values(), state="readonly")
         self.result_unit_combobox.bind("<Button-1>", self.update_result_unit_values) # agrego llamada para actualizar valores cuando recibe el foco
@@ -176,9 +174,11 @@ class RecipeView(tk.Frame):
         self.result_unit_combobox.bind("<Key>", self.result_unit_search.search)
         self.result_unit_combobox.grid(row=1, column=1, sticky="w", padx=(5, 40), pady=5)
 
-        self.result_quantity_var = tk.DoubleVar()
-        self.result_quantity = ttk.Entry(result_frame, textvariable=self.result_quantity_var, validate="key", validatecommand=vcmd, width=5)        # agrego validaciones a los quantity entries
-        self.result_quantity.grid(row=2, column=1, sticky="w", padx=(5, 40), pady=5)
+        self.result_ingredient_combobox = ttk.Combobox(result_frame, values=self.load_result_ingredient_values(), state="readonly")
+        self.result_ingredient_combobox.bind("<Button-1>", self.update_result_ingredient_values) # agrego llamada para actualizar valores cuando recibe el foco
+        self.result_ingredient_search = Seeker(self.result_ingredient_combobox, self.search_label_keys)
+        self.result_ingredient_combobox.bind("<Key>", self.result_ingredient_search.search)
+        self.result_ingredient_combobox.grid(row=2, column=1, sticky="w", padx=(5, 40), pady=5)
 
         self.load_recipe_list()
         self.recipe_listbox.selection_set(0)
@@ -249,6 +249,8 @@ class RecipeView(tk.Frame):
     def save_recipe(self):
         self.set_name()
         self.set_price()
+        self.set_unit()
+        self.set_quantity()
         try:
             self.recipe_service.save(self.selected_recipe)
         except Exception as e:
@@ -272,7 +274,7 @@ class RecipeView(tk.Frame):
         self.selected_recipe = self.recipe_service.get_by_id(self.selected_recipe.id)
         if not self.recipe_service.is_complete(self.selected_recipe):
             self.price_var.set(float())
-            self.save_recipe()
+        self.save_recipe()
         self.load_step_list()
         self.step_listbox.focus_set()
         self.step_listbox.event_generate("<ButtonRelease-1>")
@@ -469,9 +471,9 @@ class RecipeView(tk.Frame):
 
     def flush_step_values(self): # fuerza actualizar self.selected_step
         for row, widgets in enumerate(self.comboboxes):
-            self.set_ingredient(row)
-            self.set_unit(row)
-            self.set_quantity(row)
+            self.set_source_ingredient(row)
+            self.set_source_unit(row)
+            self.set_source_quantity(row)
         self.set_action()
         self.set_result_ingredient()
         self.set_result_unit()
@@ -482,15 +484,23 @@ class RecipeView(tk.Frame):
 
     def set_price(self):
         self.selected_recipe.price = float(self.entry_price.get())
+
+    def set_unit(self):
+        if self.selected_recipe.steps:
+            self.selected_recipe.unit = self.selected_recipe.steps[-1].resultUnit
+
+    def set_quantity(self):
+        if self.selected_recipe.steps:
+            self.selected_recipe.quantity = self.selected_recipe.steps[-1].resultQuantity
         
-    def set_ingredient(self, row):
+    def set_source_ingredient(self, row):
         try:
             id = int(self.comboboxes[row]["ingredient"].get().split(":")[0])
             self.selected_step.sources[row].ingredient = self.recipe_service.get_ingredient(id)
         except:
             pass
 
-    def set_unit(self, row):
+    def set_source_unit(self, row):
         try:
             id = int(self.comboboxes[row]["unit"].get().split(":")[0])
             try:
@@ -500,7 +510,7 @@ class RecipeView(tk.Frame):
         except:
             pass
 
-    def set_quantity(self, row):
+    def set_source_quantity(self, row):
         q = float(self.comboboxes[row]["quantity"].get())
         self.selected_step.sources[row].quantity = q
 

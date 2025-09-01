@@ -53,7 +53,7 @@ def create_database():
                     source_unit_id INTEGER,
                     quantity REAL,
                     target_unit_id INTEGER,
-                    UNIQUE(source_unid_id, target_unit_id),
+                    UNIQUE(source_unit_id, target_unit_id),
                     FOREIGN KEY(source_unit_id) REFERENCES unit(id) ON DELETE CASCADE,
                     FOREIGN KEY(target_unit_id) REFERENCES unit(id) ON DELETE CASCADE
 """

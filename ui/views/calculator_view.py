@@ -76,7 +76,8 @@ class CalculatorView(tk.Frame):
             completed_ingredients = self.recipe_service.get_all_completed()
         except Exception as e:
             messagebox.showerror("Error", str(e))
-        return [f"{ing.id:>3}: {ing.name}" for ing in completed_ingredients]
+        return [f"{ing.id:>3}: {ing.quantity:>12,.3f} {ing.unit.name}".ljust(35) + f"de {ing.name}"
+                 for ing in completed_ingredients]
         
     def on_select_unit(self, event):
         try:
@@ -84,18 +85,22 @@ class CalculatorView(tk.Frame):
             data = self.ingredients_listbox.get(index)
             id = int(data.split(":")[0])
             try:
-                basic = self.recipe_service.basic_ingredients(self.recipe_service.get_by_id(id))
-                show_list = []
-                for ingredient_id, unit_quantity in basic.items():
-                    for unit_id, quantity in unit_quantity.items():
-                        ingredient = self.recipe_service.get_ingredient(ingredient_id)
-                        unit_name = self.unit_service.get_by_id(unit_id).name
-                        show_list.append(f"{quantity:>8,.3f} {f'{unit_name} de {ingredient.name}'.ljust(30)} = {ingredient.price:>10,.2f}")
-                self.basic_ingredients_list_var.set(show_list)
+                basic_ingredients = self.recipe_service.basic_ingredients(self.recipe_service.get_by_id(id))
+                self.basic_ingredients_list_var.set(self.calculation_list(basic_ingredients))
             except Exception as e:
                 messagebox.showerror("Error", str(e))
         except IndexError:
             pass
-        
+
+    def calculation_list(self, basic):
+        show_list = []
+        for ingredient_id, unit_quantity in basic.items():
+            for unit_id, quantity in unit_quantity.items():
+                ingredient = self.recipe_service.get_ingredient(ingredient_id)
+                unit_name = self.unit_service.get_by_id(unit_id).name
+                price = self.recipe_service.get_price(ingredient.id, unit_id, quantity)
+                show_list.append(f"{quantity:>12,.3f} {unit_name}".ljust(25) + f"de {ingredient.name}".ljust(30) + f"= {price:>10,.2f}")
+        return show_list
+    
     def close(self):
         self.destroy()

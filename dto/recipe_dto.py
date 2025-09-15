@@ -1,27 +1,27 @@
 from dto.unit_dto import UnitDTO
 class RecipeDTO:
-    def __init__(self, name: str="", price: float=0, unit: UnitDTO= UnitDTO(), quantity: float=0, steps=[], id=None):
+    def __init__(self, name: str="", price: float=0, result_unit: UnitDTO= UnitDTO(), result_quantity: float=0, sources=[], id=None):
         self.id = id
         self.name = name
         self.price = price
-        self.unit = unit
-        self.quantity = quantity
-        self.steps = steps if steps else []
+        self.result_unit = result_unit
+        self.result_quantity = result_quantity
+        self.sources = sources if sources else []
 
     @classmethod
-    def from_model(cls, recipe_model, steps = []):
+    def from_model(cls, recipe_model, sources ):
         """Converts a Recipe model to a DTO"""
-        from services.step_service import StepService
+        from services.source_service import SourceService
         from services.unit_service import UnitService
 
-        step_service = StepService()
+        source_service = SourceService()
         unit_service = UnitService()
         return RecipeDTO(
                         recipe_model.name,
                         recipe_model.price,
-                        unit_service.get_by_id(recipe_model.unit_id),
-                        recipe_model.quantity,
-                        [step_service.get_by_id(step.id) for step in steps],
+                        unit_service.get_by_id(recipe_model.resultUnit_id),
+                        recipe_model.resultQuantity,
+                        [source_service.get_by_id(source.id) for source in sources],
                         recipe_model.id)
 
     def to_model(self):
@@ -31,7 +31,28 @@ class RecipeDTO:
         return Recipe(
                     name = self.name,
                     price = self.price,
-                    unit_id = self.unit.id if self.unit.id else 0,
-                    quantity= self.quantity,
+                    resultUnit_id = self.result_unit.id if self.result_unit.id else 0,
+                    resultQuantity= self.result_quantity,
                     id = self.id)
         
+    def __eq__(self, value) -> bool:
+        from services.source_service import SourceService
+
+        source_service = SourceService()        
+        if (self.name == value.name and
+            self.price == value.price and
+            self.result_unit.id == value.result_unit.id and
+            self.result_quantity == value.result_quantity and
+            source_service.are_equals(self.sources, value.sources)):
+            return True
+        else:
+            return False
+        
+    def __hash__(self) -> int:
+        return hash((
+            self.name,
+            self.price,
+            self.result_unit.id,
+            self.result_quantity,
+            self.sources
+        ))

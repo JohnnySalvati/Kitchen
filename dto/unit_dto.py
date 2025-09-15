@@ -1,5 +1,5 @@
 class UnitDTO:
-    def __init__(self, name=None, short_name=None, id=None):
+    def __init__(self, name="", short_name="", id=None):
         self.id = id
         self.name = name
         self.short_name = short_name
@@ -18,3 +18,14 @@ class UnitDTO:
         return Unit(name = self.name,
                             short_name = self.short_name,
                             id = self.id)
+    
+    def __eq__(self, value) -> bool:
+        if self.name == value.name and self.short_name == value.short_name:
+            return True
+        return False
+    
+    def __hash__(self) -> int:
+        return hash((
+            self.name,
+            self.short_name
+        ))

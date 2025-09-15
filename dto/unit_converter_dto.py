@@ -26,3 +26,17 @@ class UnitConverterDTO:
                             quantity = self.quantity,
                             target_unit_id = self.target_unit.id,
                             id = self.id)
+    
+    def __eq__(self, value) -> bool:
+        if (self.source_unit.id == value.source_unit.id and
+            self.quantity == value.quantity and
+            self.target_unit.id == value.target_unit.id):
+            return True
+        return False
+    
+    def __hash__(self) -> int:
+        return hash((
+            self.source_unit.id,
+            self.quantity,
+            self.target_unit.id
+        ))

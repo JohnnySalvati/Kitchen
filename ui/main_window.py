@@ -1,14 +1,9 @@
 # main_window.py
 import tkinter as tk
-from ui.views.elements_view import *
+from ui.views.units_view import *
 from ui.views.recipes_view import *
 from ui.views.unit_converter_view import *
 from ui.views.calculator_view import *
-from services.action_service import ActionService
-from services.unit_service import UnitService
-from dto.unit_dto import UnitDTO
-from dto.action_dto import ActionDTO
-
 class KitchenApp():
     def __init__(self):
         self.root = tk.Tk()
@@ -41,27 +36,9 @@ class KitchenApp():
         return btn        
     
     def unit_crud(self):
-        self.unit_service = UnitService()
-        self.create_view(self.unit_service, 
-                        UnitDTO,
-                        [
-                        {"label": "Nombre:", "field": "name"},
-                        {"label": "Abreviatura:", "field": "short_name"}
-                        ],
-                        "Unidades"
-                    )
-
-    def action_crud(self):
-        self.action_service = ActionService()
-        self.create_view(self.action_service,
-                         ActionDTO,
-                        [{"label": "Nombre:", "field": "name"}],
-                        "Acciones")
-
-    def create_view(self, service, dto, field_definition, title):
         if hasattr(self, 'elements_view') and self.elements_view.winfo_exists():
             self.elements_view.destroy() 
-        self.elements_view = ElementView(self.root, service, dto, field_definition, title)
+        self.elements_view = UnitView(self.root)
         self.elements_view.pack(side=tk.RIGHT, expand=True, fill=tk.BOTH)  
 
     def unit_converter_crud(self):
@@ -81,7 +58,3 @@ class KitchenApp():
             self.calculator_view.destroy()
         self.calculator_view = CalculatorView(self.root)
         self.calculator_view.pack(side=tk.RIGHT, expand=True, fill=tk.BOTH)  
-
-
-        
-    

@@ -2,7 +2,7 @@ import tkinter as tk
 
 class SmartListbox(tk.Listbox):
     def __init__(self, parent, **kwargs):
-        super().__init__(parent, **kwargs)
+        super().__init__(parent, selectmode=tk.SINGLE, **kwargs)
         self.has_focus = False
         self.bind('<FocusIn>', lambda e: self._set_focus(True))
         self.bind('<FocusOut>', lambda e: self._set_focus(False))

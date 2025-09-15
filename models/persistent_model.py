@@ -1,5 +1,6 @@
 from db.db import get_connection
-
+from typing import Self
+import sqlite3
 class DatabaseError(Exception):
     pass
 class PersistentModel:
@@ -8,7 +9,7 @@ class PersistentModel:
     def __init__(self, id=None):
         self.id = id
 
-    def save(self):
+    def save(self) -> Self:
         conn = self.get_connection()
         cursor = conn.cursor()
         try:
@@ -24,11 +25,13 @@ class PersistentModel:
                 query = f"UPDATE {self.table_name} SET {set_clause} WHERE id=?"
                 cursor.execute(query, field_values + (self.id,))
             conn.commit()
-            return self
-        except Exception as e:
-            raise DatabaseError(f"Error en Base de datos {e}") from e
-        finally:
             conn.close()
+            return self
+        except sqlite3.IntegrityError:
+            raise
+        except Exception:
+            conn.close()
+            raise DatabaseError(self)
 
     def delete(self):
         if self.id is None:
@@ -90,6 +93,8 @@ class PersistentModel:
     def get_connection(cls):
         try:
             return get_connection()
+        except RecursionError as e:
+            raise RecursionError(f"Se produjo una recursion infinita {e}") from e
         except Exception as e:
             raise DatabaseError(f"Error en Base de datos {e}") from e
 

@@ -16,14 +16,20 @@ class UnitConverterService:
             unit_converter.delete()
 
     def save(self, unit_converterDTO):
-        # Checks if exist unit converter
-        unit_converters = self.get_all(unit_converterDTO.source_unit.id)
-        for unit_converter in unit_converters:
-            if unit_converter.target_unit.id == unit_converterDTO.target_unit.id:
-                raise DuplicateUnitConverterError(f"Ya existe una unidad de conversion {unit_converterDTO.source_unit.name} = {unit_converterDTO.target_unit.name} ")
+        """
+        saves a unit_converter.
+        :raises DuplicateUnitConverterError: if exist conversion
+        :return: saved UnitConverterDTO
+        """
+        unit_convertersDTO_db = self.get_all(unit_converterDTO.source_unit.id)
+        for unit_converterDTO_db in unit_convertersDTO_db:
+            if unit_converterDTO_db == unit_converterDTO: # if exists in database
+                if not unit_converterDTO.target_unit.id: # Trying to save as new an existing unit_converter
+                    raise DuplicateUnitConverterError(unit_converterDTO)
+                else:
+                    break  # it's ok it's an update
         unit_converter = UnitConverterDTO.to_model(unit_converterDTO)
-        unit_converter.save()
-        return 
+        return UnitConverterDTO.from_model(unit_converter.save()) 
     
     def match(self, source_unit_id, target_unit_id):
         unit_converters = self.get_all(source_unit_id)

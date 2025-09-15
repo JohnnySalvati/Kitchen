@@ -17,10 +17,9 @@ def main():
             )
     
     ui.add_button(elements_frame, text='Unidades', command=ui.unit_crud)
-    ui.add_button(elements_frame, text='Acciones', command=ui.action_crud)
     ui.add_button(elements_frame, text='Conversiones', command=ui.unit_converter_crud)
     ui.add_button(elements_frame, text='Recetas', command=ui.recipe_crud)
-    ui.add_button(elements_frame, text='Ingredientes Básicos', command=ui.basic_ingredients)
+    ui.add_button(elements_frame, text='Calculadora', command=ui.basic_ingredients)
 
 
     ui.root.mainloop()

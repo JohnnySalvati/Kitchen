@@ -12,26 +12,23 @@ class CalculatorView(tk.Frame):
         self.recipe_service = RecipeService()
         self.unit_service = UnitService()
 
-        # frame definition
-        self.grid_columnconfigure(0, weight=2)
-        self.grid_columnconfigure(1, weight=1)
-        self.grid_rowconfigure(2, weight=1)
-
-        top_frame = tk.Frame(self, bd=4, relief="groove")
-        list_frame = tk.Frame(self, bd=4, relief="groove")
-        
-        top_frame.grid(row=0, column=0, columnspan=2, sticky="ew")
-        list_frame.grid(row=1, column=0, sticky="nsew")
-        
         # title
+        top_frame = tk.Frame(self, bd=4, relief="groove")
+        top_frame.pack(fill=tk.X, anchor=tk.N)
+        
         top_frame.columnconfigure(0, weight=1)
         top_frame.columnconfigure(1, weight=0)
+
         title_button = tk.Button(top_frame, text="Calculadora de ingredientes básicos", font=("TkCaptionFont", 12), relief="flat")
-        close_button = tk.Button(top_frame, text="X", command=self.close)
         title_button.grid(row=0, column=0, sticky="ew")
+
+        close_button = tk.Button(top_frame, text="X", command=self.close)
         close_button.grid(row=0, column=1, sticky="e")
 
-        self.completed_ingredients_list_var = tk.Variable(value=self.load_completed_ingredients())    
+        list_frame = tk.Frame(self, bd=4, relief="groove")
+        list_frame.pack(expand=True, fill=tk.BOTH, anchor=tk.N)
+        
+        self.completed_ingredients_list_var = tk.Variable()
         scrollbar = ttk.Scrollbar(list_frame, orient=tk.VERTICAL)
         self.ingredients_listbox = SmartListbox(
                                         list_frame,
@@ -43,19 +40,19 @@ class CalculatorView(tk.Frame):
         self.ingredients_listbox.bind("<ButtonRelease-1>", self.on_select_unit)
         self.ingredients_listbox.bind("<Return>", self.on_select_unit)
  
-        # buscador para lista de elementos
-        #self.listbox_search = Seeker(self.ingredients_listbox, self.search_label_keys)
-        #self.ingredients_listbox.bind("<Key>", self.listbox_search.search)
-
+        
         scrollbar.config(command=self.ingredients_listbox.yview)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         self.ingredients_listbox.pack(expand=True, fill=tk.BOTH)
 
+        basic_frame = tk.Frame(self, bd=4, relief="groove")
+        basic_frame.pack(expand=True, fill=tk.BOTH, anchor=tk.N)
+
         self.basic_ingredients_list_var = tk.Variable(value=[])    
-        scrollbar = ttk.Scrollbar(list_frame, orient=tk.VERTICAL)
+        scrollbar = ttk.Scrollbar(basic_frame, orient=tk.VERTICAL)
         self.basic_ingredients_listbox = SmartListbox(
-                                        list_frame,
-                                        font=("Courier New", 10),
+                                        basic_frame,
+                                        font=("Courier New", 15),
                                         exportselection=False,
                                         listvariable=self.basic_ingredients_list_var,
                                         yscrollcommand=scrollbar.set,
@@ -70,20 +67,45 @@ class CalculatorView(tk.Frame):
         scrollbar.config(command=self.basic_ingredients_listbox.yview)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         self.basic_ingredients_listbox.pack(expand=True, fill=tk.BOTH)
+        
+        total_frame = tk.Frame(self, bd=4, relief="groove")
+        total_frame.pack(fill=tk.X, anchor=tk.S)
+
+        # search frame
+        search_frame = tk.Frame(total_frame, bd=2, relief="groove")
+        search_frame.pack(expand=True, fill="both", side="left")
+
+        search_label = tk.Label(search_frame, text="Busqueda:", anchor="e")
+        search_label_keys = tk.Label(search_frame, width=20, anchor="w")
+        search_label.pack(side="left")
+        search_label_keys.pack(side="left")
+
+        self.listbox_search = Seeker(self.ingredients_listbox, search_label_keys)
+        self.ingredients_listbox.bind("<Key>", self.listbox_search.search)
+
+        self.total_var = tk.StringVar(value="0.00")
+        total_label = tk.Label( total_frame,
+                                textvariable=self.total_var,
+                                font= ("Courier New", 20),
+                                width=20,
+                                anchor=tk.E)
+        total_label.pack(side="left")
+        self.load_completed_ingredients()
 
     def load_completed_ingredients(self, event=None):
         try:
             completed_ingredients = self.recipe_service.get_all_completed()
         except Exception as e:
             messagebox.showerror("Error", str(e))
-        return [f"{ing.id:>3}: {ing.quantity:>12,.3f} {ing.unit.name}".ljust(35) + f"de {ing.name}"
-                 for ing in completed_ingredients]
+        sorted_completed_ingredients = sorted(completed_ingredients, key=lambda ing: ing.name)
+        self.completed_ingredients_list_var.set([f"{ing.result_quantity:>12,.2f} {ing.result_unit.name}".ljust(35) + f"de {ing.name}"
+                                                 for ing in sorted_completed_ingredients])
+        self.completed_ingredients_ids = [ing.id for ing in sorted_completed_ingredients]
         
     def on_select_unit(self, event):
         try:
             index = self.ingredients_listbox.curselection()[0]
-            data = self.ingredients_listbox.get(index)
-            id = int(data.split(":")[0])
+            id = self.completed_ingredients_ids[index]
             try:
                 basic_ingredients = self.recipe_service.basic_ingredients(self.recipe_service.get_by_id(id))
                 self.basic_ingredients_list_var.set(self.calculation_list(basic_ingredients))
@@ -94,12 +116,15 @@ class CalculatorView(tk.Frame):
 
     def calculation_list(self, basic):
         show_list = []
+        total = 0
         for ingredient_id, unit_quantity in basic.items():
             for unit_id, quantity in unit_quantity.items():
                 ingredient = self.recipe_service.get_ingredient(ingredient_id)
                 unit_name = self.unit_service.get_by_id(unit_id).name
                 price = self.recipe_service.get_price(ingredient.id, unit_id, quantity)
-                show_list.append(f"{quantity:>12,.3f} {unit_name}".ljust(25) + f"de {ingredient.name}".ljust(30) + f"= {price:>10,.2f}")
+                total += price
+                show_list.append(f"{quantity:>12,.2f} {unit_name}".ljust(25) + f"de {ingredient.name}".ljust(30) + f"= {price:>10,.2f}")
+        self.total_var.set(f"{total:,.2f}")
         return show_list
     
     def close(self):
